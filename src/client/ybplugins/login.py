@@ -447,7 +447,7 @@ class Login:
         @app.route(
             urljoin(self.setting['public_basepath'],
                     'user/<int:qqid>/api/'),
-            methods=['GET', 'PUT', 'PATCH'])
+            methods=['GET', 'PUT'])
         async def yobot_user_info_api(qqid):
             if 'yobot_user' not in session:
                 return jsonify(code=10, message='未登录')
@@ -461,7 +461,6 @@ class Login:
                 return jsonify(
                     code=0,
                     nickname=user_data.nickname,
-                    notify_preference=user_data.notify_preference,
                     authority_group=user_data.authority_group,
                     clan_group_id=user_data.clan_group_id,
                     last_login_ipaddr=user_data.last_login_ipaddr,
@@ -471,11 +470,9 @@ class Login:
             if new_setting is None:
                 return jsonify(code=30, message='消息体格式错误')
             new_nickname = new_setting.get('nickname')
-            if new_nickname is not None:
-                user_data.nickname = new_nickname
-            new_notify_preference = new_setting.get('notify_preference')
-            if new_notify_preference is not None:
-                user_data.notify_preference = new_notify_preference
+            if new_nickname is None:
+                return jsonify(code=32, message='消息体内容错误')
+            user_data.nickname = new_nickname
             user_data.save()
             return jsonify(code=0, message='success')
 

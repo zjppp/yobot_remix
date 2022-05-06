@@ -3,13 +3,13 @@
 <head>
   <title>yobot设置</title>
   <meta name='viewport' content='width=660' charset="utf-8" />
-  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.11/vue.min.js"></script>
-  <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.19.2/axios.min.js"></script>
-  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.13.0/index.js"></script>
-  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.13.0/theme-chalk/index.css">
+  <script src="https://yocool.pcrlink.cn/js/vue/2.6.11/vue.min.js"></script>
+  <script src="https://yocool.pcrlink.cn/js/axios/0.19.2/axios.min.js"></script>
+  <script src="https://yocool.pcrlink.cn/js/element-ui/2.13.0/index.js"></script>
+  <link rel="stylesheet" href="https://we-aatrox.top/css/element-ui/2.13.0/index.css">
   <style>
     .el-input {
-      width: 80%;
+      width: 100%;
     }
   </style>
 </head>
@@ -24,16 +24,13 @@
       </el-form-item>
       <el-form-item>
         <el-button type="info" @click="setting.public_address = window.location.origin+'/'">填入当前地址</el-button>
-        <!--
         <el-button type="info" @click="domainApply = true">获取 yobot 域名</el-button>
-        -->
       </el-form-item>
       <el-dialog title="申请yobot域名" :visible.sync="domainApply">
         <el-form>
           <el-form-item label="域名" label-width="120">
             <el-input v-model="applyName" placeholder="字母、数字" maxlength="16" show-word-limit>
               <el-select v-model="domain" slot="append" placeholder="选择后缀" style="width: 150px">
-                <el-option label=".yobot.xyz" value=".yobot.xyz"></el-option>
                 <el-option label=".yobot.club" value=".yobot.club"></el-option>
                 <el-option label=".xcw.best" value=".xcw.best"></el-option>
               </el-select>
@@ -48,12 +45,6 @@
       </el-dialog>
       <el-form-item label="此站点的URL前缀">
         <el-input v-model="setting.public_basepath" placeholder="/yobot/"></el-input>
-      </el-form-item>
-      <el-form-item label="此站点的gzip压缩">
-        开启 gzip 压缩能很大程度节省流量<br/>
-        1级压缩大约节省 70%，9级压缩大约节省 80%<br/>
-        如果你的反向代理软件（nginx 等）开启了 gzip_proxy，那么应该将此处设置为 0<br/>
-        <el-input-number v-model="setting.web_gzip" :min="0" :max="9" placeholder="5"></el-input-number>
       </el-form-item>
       <el-form-item label="主页展示备案号">
         <el-checkbox v-model="setting.show_icp"></el-checkbox>
@@ -124,121 +115,50 @@
         </el-button>
         <el-button size="mini" icon="el-icon-remove-outline" @click="setting['white-list-group'].pop()">删除</el-button>
       </el-form-item>
-      <el-form-item label="更新和重启指令需要的权限">
-        <el-radio v-model.number="setting['setting-restrict']" :label="0">仅主人</el-radio>
-        <el-radio v-model.number="setting['setting-restrict']" :label="1">群主以上</el-radio>
-        <el-radio v-model.number="setting['setting-restrict']" :label="2">管理员以上</el-radio>
-        <el-radio v-model.number="setting['setting-restrict']" :label="3">所有人</el-radio>
-      </el-form-item>
       <el-form-item label="允许进行批量私聊">
         <el-checkbox v-model="setting.allow_bulk_private"></el-checkbox>
-      </el-form-item>
-      <el-form-item label="自动更新">
-        <el-checkbox v-model="setting.auto_update"></el-checkbox>
-      </el-form-item>
-      <el-form-item :hidden="!setting.auto_update">
-        <el-input v-model="setting['update-time']" placeholder="03:30"></el-input>
-      </el-form-item>
-      <el-form-item label="公会战记录">
-        <el-radio v-model="setting.clan_battle_mode" label="chat" @change="comfirm_change_clan_mode" hidden>使用旧版（仅聊天）
-        </el-radio>
-        <el-radio v-model="setting.clan_battle_mode" label="web" @change="comfirm_change_clan_mode">使用（聊天+网站）
-        </el-radio>
-        <el-radio v-model="setting.clan_battle_mode" label="none">关闭</el-radio>
-      </el-form-item>
-      <el-form-item label="模拟抽卡">
-        <el-checkbox v-model="setting.gacha_on">允许群聊抽卡</el-checkbox>
-        <el-checkbox v-model="setting.gacha_private_on">允许私聊抽卡</el-checkbox>
-      </el-form-item>
-      <el-form-item label="竞技场查询">
-        <el-select v-model="setting.jjc_search">
-          <el-option label="关闭" value="off"></el-option>
-          <el-option label="nomae.net" value="nomae.net"></el-option>
-          <el-option label="pcrdfans.com" value="pcrdfans.com"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="pcrdfans.com apikey" :hidden="setting.jjc_search!='pcrdfans.com'">
-        <el-input v-model="setting.jjc_auth_key" placeholder="如果您没有apikey，请更换其他查询方式">
-        </el-input>
-      </el-form-item>
-      <el-form-item label="新闻推送">
-        <el-checkbox v-model="setting.news_jp_official">日服官网</el-checkbox>
-        <el-checkbox v-model="setting.news_jp_twitter">日服推特</el-checkbox>
-        <el-checkbox v-model="setting.news_tw_official">台服官网</el-checkbox>
-        <el-checkbox v-model="setting.news_cn_official">国服官网</el-checkbox>
-        <el-checkbox v-model="setting.news_cn_bilibili">国服Bilibili动态</el-checkbox>
-      </el-form-item>
-      <el-form-item label="自动选择检测时间">
-        <el-checkbox v-model="setting.news_interval_auto"></el-checkbox>
-      </el-form-item>
-      <el-form-item label="检测间隔（分钟）" :hidden="setting.news_interval_auto">
-        <el-slider v-model.number="setting.news_interval_minutes" :min="10" :max="60" show-input>
-        </el-slider>
-      </el-form-item>
-      <el-form-item label="新闻通知到群">
-        <el-input v-for="(g,i) in setting.notify_groups" v-model.number="setting.notify_groups[i]" placeholder="群号">
-        </el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button size="mini" icon="el-icon-circle-plus-outline" @click="setting.notify_groups.push(null)">添加
-        </el-button>
-        <el-button size="mini" icon="el-icon-remove-outline" @click="setting.notify_groups.pop()">删除 </el-button>
-      </el-form-item>
-      <el-form-item label="新闻通知到人">
-        <el-input v-for="(g,i) in setting.notify_privates" v-model.number="setting.notify_privates[i]"
-          placeholder="QQ号"></el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button size="mini" icon="el-icon-circle-plus-outline" @click="setting.notify_privates.push(null)">添加
-        </el-button>
-        <el-button size="mini" icon="el-icon-remove-outline" @click="setting.notify_privates.pop()">删除 </el-button>
-      </el-form-item>
-      <el-form-item label="日程表区域">
-        <el-select v-model="setting.calender_region" placeholder="日程表区域">
-          <el-option label="日服日程表" value="jp"></el-option>
-          <el-option label="台服日程表" value="tw"></el-option>
-          <el-option label="国服日程表" value="cn"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="每日推送日程">
-        <el-checkbox v-model="setting.calender_on"></el-checkbox>
-        <el-input :disabled="!setting.calender_on" v-model="setting.calender_time" placeholder="08:00">
-        </el-input>
       </el-form-item>
     </el-form>
     <p>
       <el-collapse v-model="activeNames" @change="bossSetting = !bossSetting">
         <el-collapse-item title="boss设置（点击展开）" name="1">
           <div :hidden="!bossSetting">
-            <div v-for="(area_health, area) in setting.boss">
-              <h4>[[ {jp: "日服", tw: "台服", cn: "国服"}[area] ]]</h4>
+            <div v-for="area_health, area in setting.boss" style="margin-bottom: 5%;">
+              <h4 style="margin-bottom: -2%;">[[ {jp:"日服",tw:"台服",cn:"国服",eff:"得分系数"}[area] ]]</h4>
               <table>
                 <tr>
                   <th></th>
-                  <th>起始周目数</th>
                   <th v-for="k in 5">[[k]]号boss</th>
                 </tr>
-                <tr v-for="(stage, i) in area_health">
-                  <td>[[i+1]]阶段</td>
-                  <td>
-                    <input v-if="i == 0" :value="1" disabled type="number" />
-                    <input v-else v-model.number="setting.stage_cycle[area][i - 1]" placeholder="起始周目数" type="number" />
+                <tr>
+                  <th></th>
+                  <th v-for="boss_num in 5">
+                    <el-select style="width: 120px;" v-model="setting.boss_id[area][boss_num-1]" filterable placeholder="选择boss">
+                      <el-option v-for="(name, id) in boss_id_name[String(boss_num)]" :key="id" :label="name" :value="id">
+                        <img :src="'https://we-aatrox.top/yocool/boss_icon/' + id + '.webp'" style="float: left;width: 30px;height: 30px; margin-right: 5px;">[[name]]
+                      </el-option>
+                    </el-select>
+                  </th>
+                </tr>
+                <tr v-for="level, k in area_health">
+                  <td>[[k+1]]阶段</td>
+                  <td v-for="health, b in level">
+                    <el-input style="width: 120px;" v-model.number="area_health[k][b]" placeholder="boss血量"/>
                   </td>
-                  <td v-for="health, b in stage"><input v-model.number="area_health[i][b]" placeholder="boss血量"
-                      type="number" :step="1000000" />
-                  </td>
+                  <br>
+
+                  <td><el-input style="width: 60px;" v-model.number="setting.level_by_cycle[area][k][0]" placeholder="周目"/></td>
+                  <td>-</td>
+                  <td><el-input style="width: 60px;" v-model.number="setting.level_by_cycle[area][k][1]" placeholder="周目"/></td>
+                  <td>周目</td>
                 </tr>
               </table>
-              <button @click="add_stage(area)">添加阶段数</button>
-              <button :disabled="area_health.length == 1" @click="remove_stage(area)">减少阶段数</button>
+              <el-button size="mini" @click="add_level(area)">添加阶段数</el-button>
+              <el-button size="mini" @click="remove_level(area)">删除阶段数</el-button>
             </div>
-            <div class="comment">备注：<br>当前日服公会战阶段情况如下：<br>1阶段：1~3周目<br>2阶段：4~10周目<br>3阶段：11~34周目<br>4阶段：35~44周目<br>5阶段：45以上</div>
           </div>
         </el-collapse-item>
       </el-collapse>
-    </p>
-    <p>
-      <a href="{{ url_for('yobot_pool_setting') }}">前往卡池设置</a>
     </p>
     <p>
       <el-button type="success" @click="update">确定</el-button>

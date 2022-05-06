@@ -1,11 +1,3 @@
-"""
-实例3：作为nonebot的插件
-
-加载方法：
-
-将这个项目整个文件夹放在nonebot插件目录下即可
-"""
-
 import sys
 
 if __name__ == "__main__":
@@ -30,12 +22,6 @@ if __name__ == "__main__":
 from .yobot import Yobot
 import asyncio
 
-print(
-    "|======================================================|\n"
-    "| yobot 插件版即将停止支持，请尽快更换为独立版         |\n"
-    "| 详见 https://yobot.win/install/transfer-from-plugin/ |\n"
-    "|======================================================|\n"
-)
 
 if "nonebot" in sys.modules:
     from nonebot import get_bot, scheduler

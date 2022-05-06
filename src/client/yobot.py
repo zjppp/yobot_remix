@@ -1,15 +1,12 @@
 # coding=utf-8
-import gzip
 import json
 import mimetypes
 import os
 import random
-import re
 import shutil
 import socket
 import sys
 from functools import reduce
-from io import BytesIO
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 from urllib.parse import urljoin
 
@@ -17,20 +14,18 @@ import requests
 from aiocqhttp.api import Api
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from opencc import OpenCC
-from quart import Quart, make_response, request, send_file
+from quart import Quart, send_file
 
 if __package__:
-    # 插件版 相对导入
-    from .ybplugins import (calender, clan_battle, custom, gacha, group_leave,
-                            homepage, jjc_consult, login, marionette, miner,
-                            push_news, settings, switcher, templating, updater,
-                            web_util, ybdata, yobot_msg)
+    from .ybplugins import (clan_battle, homepage,
+                            login, marionette, settings,
+                            switcher, templating, web_util, ybdata,
+                            yobot_msg, custom, group_leave)
 else:
-    # 独立版 绝对导入
-    from ybplugins import (calender, clan_battle, custom, gacha, group_leave,
-                           homepage, jjc_consult, login, marionette, miner,
-                           push_news, settings, switcher, templating, updater,
-                           web_util, ybdata, yobot_msg)
+    from ybplugins import (clan_battle, homepage,
+                           login, marionette, settings,
+                           switcher, templating, web_util, ybdata,
+                           yobot_msg, custom, group_leave)
 
 # 本项目构建的框架非常粗糙，不建议各位把时间浪费本项目上
 # 如果想开发自己的机器人，建议直接使用 nonebot 框架
@@ -38,8 +33,8 @@ else:
 
 
 class Yobot:
-    Version = "[v3.6.12]"  # semver
-    Version_id = 280
+    Version = "[v3.6.6]"
+    Version_id = 215
     #  "git rev-list --count HEAD"
 
     def __init__(self, *,
@@ -59,6 +54,7 @@ class Yobot:
         dirname = os.path.abspath(os.path.join(basepath, data_path))
         if not os.path.exists(dirname):
             os.makedirs(dirname)
+
         config_f_path = os.path.join(dirname, "yobot_config.json")
         if is_packaged:
             default_config_f_path = os.path.join(
@@ -69,9 +65,19 @@ class Yobot:
         with open(default_config_f_path, "r", encoding="utf-8") as config_file:
             self.glo_setting = json.load(config_file)
         if not os.path.exists(config_f_path):
-            with open(config_f_path, "w") as f:
-                f.write("{}")
+            shutil.copyfile(default_config_f_path, config_f_path)
             print("设置已初始化，发送help获取帮助")
+
+        boss_filepath = os.path.join(dirname, "boss3.json")
+        if not os.path.exists(boss_filepath):
+            if is_packaged:
+                default_boss_filepath = os.path.join(
+                    sys._MEIPASS, "packedfiles", "default_boss.json")
+            else:
+                default_boss_filepath = os.path.join(
+                    os.path.dirname(__file__), "packedfiles", "default_boss.json")
+            shutil.copyfile(default_boss_filepath, boss_filepath)
+
         pool_filepath = os.path.join(dirname, "pool3.json")
         if not os.path.exists(pool_filepath):
             if is_packaged:
@@ -81,47 +87,28 @@ class Yobot:
                 default_pool_filepath = os.path.join(
                     os.path.dirname(__file__), "packedfiles", "default_pool.json")
             shutil.copyfile(default_pool_filepath, pool_filepath)
-        for e in os.environ:
-            if e.startswith("YOBOT_"):
-                k = e[6:].lower()
-                self.glo_setting[k] = os.environ[e]
+
+        BossIdAndName_filepath = os.path.join(dirname, "BossIdAndName.json")
+        if not os.path.exists(BossIdAndName_filepath):
+            if is_packaged:
+                default_BossIdAndName_filepath = os.path.join(
+                    sys._MEIPASS, "packedfiles", "default_BossIdAndName.json")
+            else:
+                default_BossIdAndName_filepath = os.path.join(
+                    os.path.dirname(__file__), "packedfiles", "default_BossIdAndName.json")
+            shutil.copyfile(default_BossIdAndName_filepath, BossIdAndName_filepath)
+        with open(BossIdAndName_filepath, "r", encoding="utf-8") as config_file:
+            self.boss_id_name = json.load(config_file)
+    
         with open(config_f_path, "r", encoding="utf-8-sig") as config_file:
             cfg = json.load(config_file)
             for k in self.glo_setting.keys():
                 if k in cfg:
                     self.glo_setting[k] = cfg[k]
 
-        if verinfo is None:
-            verinfo = updater.get_version(self.Version, self.Version_id)
-            print(verinfo['ver_name'])
 
         # initialize database
-        ybdata.init(os.path.join(dirname, 'yobotdata.db'))
-
-        # enable gzip
-        if self.glo_setting["web_gzip"] > 0:
-            gzipped_types = {'text/html', 'text/javascript', 'text/css', 'application/json'}
-            @quart_app.after_request
-            async def gzip_response(response):
-                accept_encoding = request.headers.get('Accept-Encoding', '')
-                if (response.status_code < 200 or
-                    response.status_code >= 300 or
-                    len(await response.get_data()) < 1024 or
-                    'gzip' not in accept_encoding.lower() or
-                        'Content-Encoding' in response.headers):
-                    return response
-
-                gzip_buffer = BytesIO()
-                gzip_file = gzip.GzipFile(
-                    mode='wb', compresslevel=self.glo_setting["web_gzip"], fileobj=gzip_buffer)
-                gzip_file.write(await response.get_data())
-                gzip_file.close()
-                gzipped_response = gzip_buffer.getvalue()
-                response.set_data(gzipped_response)
-                response.headers['Content-Encoding'] = 'gzip'
-                response.headers['Content-Length'] = len(gzipped_response)
-
-                return response
+        ybdata.init(os.path.join(dirname, 'yobotdata_new.db'))
 
         # initialize web path
         if not self.glo_setting.get("public_address"):
@@ -146,13 +133,6 @@ class Yobot:
 
         if not self.glo_setting["public_basepath"].endswith("/"):
             self.glo_setting["public_basepath"] += "/"
-
-        # initialize update time
-        if self.glo_setting["update-time"] == "random":
-            self.glo_setting["update-time"] = "{:02d}:{:02d}".format(
-                random.randint(2, 4),
-                random.randint(0, 59)
-            )
 
         # initialize client salt
         if self.glo_setting["client_salt"] is None:
@@ -181,37 +161,8 @@ class Yobot:
                     "assets/<path:filename>"),
             methods=["GET"])
         async def yobot_static(filename):
-            accept_encoding = request.headers.get('Accept-Encoding', '')
-            origin_file = os.path.join(os.path.dirname(
-                __file__), "public", "static", filename)
-            if ('gzip' not in accept_encoding.lower()
-                    or self.glo_setting['web_gzip'] == 0):
-                return await send_file(origin_file)
-            gzipped_file = os.path.abspath(os.path.join(
-                os.path.dirname(__file__),
-                "public",
-                "static",
-                filename+"."+self.Version[1:-1]+".gz",
-            ))
-            if not os.path.exists(gzipped_file):
-                if not os.path.exists(origin_file):
-                    return "404 not found", 404
-                with open(origin_file, 'rb') as of, open(gzipped_file, 'wb') as gf:
-                    with gzip.GzipFile(
-                        mode='wb',
-                        compresslevel=self.glo_setting["web_gzip"],
-                        fileobj=gf,
-                    ) as gzip_file:
-                        gzip_file.write(of.read())
-
-            response = await make_response(await send_file(gzipped_file))
-            response.mimetype = (
-                mimetypes.guess_type(os.path.basename(origin_file))[0]
-                or "application/octet-stream"
-            )
-            response.headers['Content-Encoding'] = 'gzip'
-            response.headers['Vary'] = 'Accept-Encoding'
-            return response
+            return await send_file(
+                os.path.join(os.path.dirname(__file__), "public", "static", filename))
 
         # add route for output files
         if not os.path.exists(os.path.join(dirname, "output")):
@@ -243,17 +194,13 @@ class Yobot:
             "bot_api": bot_api,
             "scheduler": scheduler,
             "app": quart_app,
+            "boss_id_name": self.boss_id_name
         }
 
         # load plugins
         plug_all = [
-            updater.Updater(**kwargs),
             switcher.Switcher(**kwargs),
             yobot_msg.Message(**kwargs),
-            gacha.Gacha(**kwargs),
-            jjc_consult.Consult(**kwargs),
-            push_news.News(**kwargs),
-            calender.Event(**kwargs),
             homepage.Index(**kwargs),
             marionette.Marionette(**kwargs),
             login.Login(**kwargs),
@@ -270,7 +217,6 @@ class Yobot:
 
         # load new plugins
         self.plug_new = [
-            miner.Miner(**kwargs),
             group_leave.GroupLeave(**kwargs),
             custom.Custom(**kwargs),
         ]

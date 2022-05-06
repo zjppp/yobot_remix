@@ -8,12 +8,14 @@ var vm = new Vue({
         domainApply: false,
         applyName: '',
         loading: false,
+        boss_id_name: {}
     },
     mounted() {
         var thisvue = this;
         axios.get(api_path).then(function (res) {
             if (res.data.code == 0) {
                 thisvue.setting = res.data.settings;
+                thisvue.boss_id_name = res.data.boss_id_name;
             } else {
                 alert(res.data.message);
             }
@@ -23,6 +25,11 @@ var vm = new Vue({
     },
     methods: {
         update: function (event) {
+            var flag = this.check_level_by_cycle()
+            if (!flag) {
+                alert('阶段对应周目错误，请检查是不是填了相同的周目数或周目范围重叠');
+                return
+            }
             this.setting.web_mode_hint = false;
             axios.put(
                 api_path,
@@ -72,26 +79,31 @@ var vm = new Vue({
                 alert(error);
             });
         },
-        add_stage: function (area) {
-            this.setting.boss[area].push(this.setting.boss[area][this.setting.boss[area].length - 1].slice());
-            const index = this.setting.stage_cycle[area].length - 1;
-            if (index >= 0) {
-                this.setting.stage_cycle[area].push(this.setting.stage_cycle[area][index] + 1);
-            } else {
-                this.setting.stage_cycle[area].push(2);
-            }
-        },
-        remove_stage: function (area) {
-            if (this.setting.boss[area].length == 1) return;
-            this.setting.boss[area].pop();
-            this.setting.stage_cycle[area].pop();
-        },
         comfirm_change_clan_mode: function (event) {
             this.$alert('修改模式后，公会战数据会重置。请不要在公会战期间修改！', '警告', {
                 confirmButtonText: '知道了',
                 type: 'warning',
             });
         },
+        add_level: function (area) {
+            this.setting.boss[area].push([0, 0, 0, 0, 0]);
+            this.setting.level_by_cycle[area].push([0, 0]);
+        },
+        remove_level: function (area) {
+            this.setting.boss[area].pop();
+            this.setting.level_by_cycle[area].pop();
+        },
+        check_level_by_cycle: function () {
+            for (const area in this.setting.level_by_cycle) {
+                var last_level_max = 0
+                for (const level_info of this.setting.level_by_cycle[area]) {
+                    if (last_level_max >= level_info[0] || level_info[0] >= level_info[1])
+                        return false
+                    last_level_max = level_info[1]
+                }
+            }
+            return true
+        }
     },
     delimiters: ['[[', ']]'],
 })
