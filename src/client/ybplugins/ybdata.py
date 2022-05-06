@@ -4,7 +4,7 @@ from playhouse.migrate import SqliteMigrator, migrate
 from .web_util import rand_string
 
 _db = SqliteDatabase(None)
-_version = 3  # 目前版本
+_version = 1  # 目前版本
 
 MAX_TRY_TIMES = 5
 
@@ -188,8 +188,6 @@ def db_upgrade(old_version):
     migrator = SqliteMigrator(_db)
     if old_version < 2:
         pass
-    if old_version < 4:
-        Clan_group_backups.create_table()
     
     
     DB_schema.replace(key='version', value=str(_version)).execute()
