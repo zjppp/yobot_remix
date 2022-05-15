@@ -33,8 +33,8 @@ else:
 
 
 class Yobot:
-    Version = "[v3.6.6]"
-    Version_id = 215
+    Version = "[v4.0]"
+    Version_id = 300
     #  "git rev-list --count HEAD"
 
     def __init__(self, *,
@@ -106,7 +106,9 @@ class Yobot:
                 if k in cfg:
                     self.glo_setting[k] = cfg[k]
 
-
+        if verinfo is None:
+            verinfo = get_version(self.Version, self.Version_id)
+            print(verinfo['ver_name'])
         # initialize database
         ybdata.init(os.path.join(dirname, 'yobotdata_new.db'))
 
@@ -312,3 +314,11 @@ class Yobot:
         if cmd == "update":
             res = self.plug_passive[0].execute(0x30)
             return res["reply"]
+
+
+def get_version(base_version: str, base_commit:  int) -> dict:
+        return {
+            "run-as": "python",
+            "commited": False,
+            "ver_name": f"ReMix-{base_version}"
+        }
