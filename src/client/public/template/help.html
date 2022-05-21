@@ -4,11 +4,10 @@
 </p> -->
 
 <head>
-    <title>sora使用手册</title>
-    <link rel="shortcut icon" href="https://ftp.bmp.ovh/imgs/2020/07/a02e724300f43d03.png" type="image/x-icon">
+    <title>yobot_remix使用手册</title>
+    <!-- <link rel="shortcut icon" href="https://ftp.bmp.ovh/imgs/2020/07/a02e724300f43d03.png" type="image/x-icon"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <!--made by Github/crovo007 -->
     <meta name="description" Content="机器人功能指令说明">
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css">
     <style>
@@ -33,20 +32,20 @@
 </head>
 
 <body class="markdown-body">
-    <h1>sora使用手册</h1>
-    <h3>sora_bot是一个整合了xcw_bot、yobot、hoshino_bot各项功能的机器人<br></h3>
-    <p><b>快速查阅:</b><br>
-        <a href="#1">如何报刀？</a><br><a href="#2">如何登陆管理界面？</a><br><a href="#3">如何进行各项查询？</a><br><a href="#4">如何抽卡？</a></p>
+    <h1>Yobot_remix使用手册</h1>
+    <!-- <h3>https://github.com/eggggi/yobot_remix<br></h3> -->
+    <!-- <p><b>快速查阅:</b><br>
+        <a href="#1">如何报刀？</a><br><a href="#2">如何登陆管理界面？</a><br><a href="#3">如何进行各项查询？</a><br><a href="#4">如何抽卡？</a></p> -->
     <h2>前言</h2>
-    <p>欢迎您使用sora_bot！接下来，本手册将详细介绍本bot的各项功能。<b>若您是初次使用，推荐先查看上方的"快速查阅"栏目。您也可以使用Ctrl+F快速在页面中查找。对于手机，请使用"页面内查找"。</b>如有疑惑，请询问QQ1575547452。
+    <p>欢迎您使用yobot_remix接下来，本手册将详细介绍报刀系统的各项功能。<b>若您是初次使用，推荐先查看上方的"快速查阅"栏目。您也可以使用Ctrl+F快速在页面中查找。对于手机，请使用"页面内查找"。</b>如有疑惑，请在 https://github.com/eggggi/yobot_remix 提issue。
     </p>
     <h3>指令标记说明：</h3>
-    <p><b>(at)</b>标记代表该命令需要at机器人</p>
+    <!-- <p><b>(at)</b>标记代表该命令需要at机器人</p> -->
     <p><b>(管理员/维护组)</b>标记表示功能需要管理员或维护组权限 </p>
-    <p><b>(自动)</b>标记启用后无需手动触发，会自动推送或执行 </p>
-    <p>方括号表示参数可以省略</p>
-    <p>命令中间的"+"无需输入</p>
-    <p><b>如无特殊说明，所有功能仅群聊可用。</b></p>
+    <!-- <p><b>(自动)</b>标记启用后无需手动触发，会自动推送或执行 </p> -->
+    <p><b>方括号[]</b>表示参数可以省略</p>
+    <p>命令中间的<b>"+"</b>号无需输入</p>
+    <!-- <p><b>如无特殊说明，所有功能仅群聊可用。</b></p>
     <h3>本群服务启禁用说明：</h3>
     <p>在群聊中发送"lssv -a"<b>(请注意此处有空格)</b>以查看所有服务，其中服务名称前带"启用|"表示该服务已启用，带"禁用|"表示服务已禁用。发送"禁用/启用 服务名"<b>(请注意此处也有空格，如：禁用 gacha)</b>以禁用/启用某个服务<sup class="footnote">1</sup></p>
     <p><sup class="footnote">1</sup>注：本指令要求管理员以上权限</p>
@@ -55,7 +54,7 @@
     <h4></h4>
     <p>box统计：发送"帮助pcrbox统计"查看帮助
     <br>存轴器：发送"帮助pcr轴"查看帮助</p>
-    <p style=color:red><b>注意：初次使用时需要设置数据库名称，请设置不少于六个字符的名称，避免被其他人通过"切换数据库"命令读取。</b></p>
+    <p style=color:red><b>注意：初次使用时需要设置数据库名称，请设置不少于六个字符的名称，避免被其他人通过"切换数据库"命令读取。</b></p> -->
     <h3><a id="1">会战管理</a></h3>
     <table>
         <thead>
@@ -158,6 +157,10 @@
                 <td>挂树，当boss被击败时通知</td>
             </tr>
             <tr>
+                <td>权限[@某人]</td>
+                <td>出现无权限的时候,管理员可以用这个指令申请权限,如果有at则为给予他人权限</td>
+            </tr>
+            <tr>
                 <td>业绩表</td>
                 <td>查看当前所有玩家的kpi（代刀）</td>
             </tr>
@@ -168,7 +171,7 @@
         <sup class="footnote">2</sup>此功能是在日期变更后<b>(游戏中是以凌晨四点(日服)/凌晨五点(国台服)为界)</b>，将出刀记录添加到前一天。例如日服中03:59完成出刀，在04:01时向机器人报刀则需要加上[昨日]<br>
         <sup class="footnote">3</sup>在公会战面板的“查刀”页中，可以查看所有人今日是否已使用SL<br>
     <h3><a id="2">管理系统</a></h3>
-    <h4>注：群管理员有时可能不会获得后台的管理权限，如出现此种情况，请联系qq：1575547452更改。</h4>
+    <h4>注：群管理员有时可能不会获得后台的管理权限，如出现此种情况，请发送[权限] </h4>
     <table>
         <thead>
             <tr>
@@ -202,7 +205,7 @@
     </table>
     <p><sup class="footnote">5</sup>如果不知道密码，请先私聊机器人发送"重置密码"</p>
     <p style=color:red;font-size:120%><sup class="footnote">6</sup>当管理员希望机器人离开群聊时，应该使用此条命令而不是直接踢出群聊，避免增加封号风险</p>
-    <h3><a id="2">会战报告</a></h3>
+    <!-- <h3><a id="2">会战报告</a></h3>
     <table>
         <thead>
             <tr>
@@ -271,7 +274,6 @@
             </tr>
             <tr>
                 <td>挖矿计算 +当前名次</td>
-                <!--made by Github/crovo007 -->
                 <td>计算剩余可获得的奖励钻石</td>
             </tr>
             <tr>
@@ -673,11 +675,10 @@
                 <td>以下命令均可:抽签、人品、运势，需要@机器人；抽猫猫签、抽大菠萝签等，不需要@机器人</td>
             </tr>
         </tbody>
-    </table>
+    </table> -->
     <h2>致谢</h2>
     <p>本bot使用了以下开源或非开源的项目或程序，在此向他们表示感谢：<br>
-        <a href="http://cqp.cc" target="_blank">酷Q</a>、<a href="http://yobot.win/" target="_blank">yobot</a>、<a
-            href="https://github.com/Ice-Cirno/HoshinoBot" target="_blank">HoshinoBot</a>、<a href="https://github.com/Tsuk1ko/CQ-picfinder-robot" target="_blank">CQ-picfinder-robot</a>、以及众多的Hoshino和酷Q插件。</p>
+        <a href="https://github.com/eggggi/yobot_remix" target="_blank">yobot_remix</a>、<a href="http://yobot.win/" target="_blank">yobot</a>
 
 </body>
 
