@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 from aiocqhttp.api import Api
 from apscheduler.triggers.cron import CronTrigger
 
-from ...ybdata import Clan_group, User
+from ...ybdata import Clan_group, Clan_member, User
 from ..exception import ClanBattleError
 from ..util import atqq
 from .define import Commands, Server
@@ -304,6 +304,33 @@ def execute(self, match_num, ctx):
 		if not self.check_blade(group_id, user_id):
 			return '你都没申请出刀，报啥子伤害啊 (╯‵□′)╯︵┻━┻'
 		return self.report_hurt(int(s), hurt, group_id, user_id)
+	
+	#TODO 权限申请封装func调用
+	elif match_num == 18:  #权限，设置意外无权限用户有权限
+		match = re.match(r'^更改权限 *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		if match:
+			if match.group(1):
+				if ctx['sender']['role'] == 'member':
+					return '只有管理员才可以申请权限'
+				user_id = int(match.group(1))
+				nickname = None
+			else:
+				nickname = (ctx['sender'].get('card') or ctx['sender'].get('nickname'))
+			user = User.get_or_create(qqid=user_id)[0]
+			membership = Clan_member.get_or_create(group_id = group_id, qqid = user_id)[0]
+			user.nickname = nickname
+			user.clan_group_id = group_id
+			if user.authority_group >= 10:
+				user.authority_group = (100 if ctx['sender']['role'] == 'member' else 10)					
+				membership.role = user.authority_group
+			user.save()
+			membership.save()
+			_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+			return '{}已成功申请权限'.format(atqq(user_id))
+	
+	elif match_num == 18:  #更改预约模式
+	#TODO 19:更改预约模式
+		print("完成度0%")
 
 
 
