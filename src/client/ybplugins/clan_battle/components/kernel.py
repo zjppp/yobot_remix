@@ -328,7 +328,7 @@ def execute(self, match_num, ctx):
 			_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
 			return '{}已成功申请权限'.format(atqq(user_id))
 	
-	elif match_num == 18:  #更改预约模式
+	elif match_num == 19:  #更改预约模式
 	#TODO 19:更改预约模式
 		print("完成度0%")
 
