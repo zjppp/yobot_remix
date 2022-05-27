@@ -78,6 +78,17 @@ el-button {
 	border-radius: 5px;
 }
 
+.small-buttons-row {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 5px;
+}
+.small-buttons-row2 {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 5px;
+}
+
 .el-menu-item {
 	padding: 5px 20px;
 }
@@ -88,7 +99,7 @@ el-button {
 }
 
 .clanname {
-	background: url("https://we-aatrox.top/yocool/image/banner.png") no-repeat;
+	background: url("https://we-aatrox.top/yocool/image/banner.png") no-repeat center center;
 	text-align: center;
 	width: 320px;
 	height: 60px;
@@ -101,6 +112,20 @@ el-button {
 	line-height: 30px;
 }
 
+.clancycle {
+	background:rgba(255, 255, 255, 0.55);
+	text-align: center;
+	width: 400px;
+	height: auto;
+	margin: 0 auto;
+	color: rgb(0, 0, 0);
+	font-size: 20px;
+	margin-top: 40px;
+	border: 2px solid black;
+	border-radius: 7px;
+	margin-bottom: -2%;
+}
+
 .clanbg {
 	background: url("https://we-aatrox.top/yocool/image/clanbg.png") no-repeat center;
 	text-align: center;
@@ -109,6 +134,127 @@ el-button {
 	transform: scale(0.75);
 	margin: 0 auto -16%;
 	display: block;
+}
+
+.boss_info-all {
+	background: url("https://we-aatrox.top/yocool/image/clanbg.png") no-repeat center;
+	position: relative;
+	width: 100%;
+	height: auto;
+	/* transform: scale(0.75); */
+	margin: 30px auto;
+	display: flex;
+}
+
+.boss_info-single_health_box {
+	float: left;
+	width: 100%;
+	height: 20px;
+	font-size: 17px;
+	font-weight: 550;
+	line-height: 20px;
+	background-color: white;
+	-webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+	-webkit-transition: width .6s ease;
+	-o-transition: width .6s ease;
+	transition: width .6s ease;
+	box-shadow: none;
+	border: 2px solid black;
+	/* margin: 10px auto -0.1%; */
+	border-radius: 7px;
+	text-align: center;
+}
+
+.boss_info-single_health {
+	float: left;
+	width: 0;
+	height: 20px;
+	line-height: 20px;
+	color: var(--font-color);
+	background-color: red;
+	-webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+	-webkit-transition: width .6s ease;
+	-o-transition: width .6s ease;
+	transition: width .6s ease;
+	box-shadow: none;
+	border-radius: 5px;
+}
+
+.boss_info-single_challenger {
+	/* display: inline-block; */
+	/* position: absolute; */
+	border: 2px solid black;
+	background-color: var(--primary-color-1);
+	font-size: 20px;
+	font-weight: 400;
+	text-align: center;
+	color:white;
+	width: auto;
+	height: 28px;
+	margin-bottom: 10px;
+	border-radius: 5px;
+}
+
+.challengers_window {
+	width: 20%;
+	height: auto;
+	border: 1px solid black;
+	border-radius: 8px;
+	text-align: center;
+	position: absolute;
+	margin-left: 5px;
+	/* left: auto;
+	top: auto; */
+	z-index: 999;
+	transform: translateY(-20%);
+	transform: translateX(-6%);
+	background-color: var(--font-color);
+	/* display: inline-block; */
+}
+
+
+.boss_icon {
+	width: 150px;
+	height: 150px;
+	/* overflow: hidden; */
+	background: url("https://we-aatrox.top/yocool/boss_icon/300100.webp");
+	background-size: 100%;
+	/* margin: 50%; */
+	/* transform:scale(0.8); */
+	/* padding:10px; */
+}
+
+.phone_spread {
+	right: 0;
+	bottom: 5;
+	width: auto;
+	height: 25px;
+	text-align: right;
+	font-weight: 550;
+	position: absolute;
+	margin-right: 3%;
+	margin-top: -40px;
+}
+
+.phone_control{
+    height:100px;
+	width: auto;
+	margin-top: 110px;
+}
+.phone_draw-enter-active, .phone_draw-leave-active {
+    transition: all 0.5s ease;
+}
+.phone_draw-enter, .phone_draw-leave-to /* .fade-leave-active below version 2.1.8 */ {
+    height: 0;
+}
+
+.fade-enter-active, .fade-leave-active {
+	transition: opacity .25s
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+	opacity: 0
 }
 
 /* -----------logo----------- */
