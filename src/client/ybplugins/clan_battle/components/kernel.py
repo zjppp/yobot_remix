@@ -247,7 +247,7 @@ def execute(self, match_num, ctx):
 		match = re.match(r'^取消 *([1-5]|挂树|申请出刀|申请|出刀|出刀all|报伤害|sl|SL|预约) *([1-5])? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return
 		b = match.group(1)
-		boss_num = match.group(2) and int(match.group(2))
+		boss_num = match.group(2) and match.group(2)
 		behalf = match.group(3) and int(match.group(3))
 		msg = ''
 		if behalf:
