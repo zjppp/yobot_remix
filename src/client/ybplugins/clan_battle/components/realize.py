@@ -489,6 +489,7 @@ def challenge(self,
 				defeat: bool,
 				damage = 0,
 				behalfed:QQid = None,
+				is_continue = None,
 				*,
 				boss_num = None,
 				previous_day = False,
@@ -511,6 +512,7 @@ def challenge(self,
 
 	behalf = None
 	if behalfed is not None:
+		behalfed = int(behalfed)
 		behalf = qqid
 		qqid = behalfed
 	if qqid == behalf: behalf = None
@@ -526,9 +528,9 @@ def challenge(self,
 		raise GroupError('又不申请出刀又不说打哪个王，报啥子刀啊 (╯‵□′)╯︵┻━┻')
 	if not self.check_blade(group_id, qqid):
 		if behalf:
-			self.apply_for_challenge(False, group_id, behalf, boss_num, qqid, False)
+			self.apply_for_challenge(is_continue, group_id, behalf, boss_num, qqid, False)
 		else:
-			self.apply_for_challenge(False, group_id, qqid, boss_num, behalf, False)
+			self.apply_for_challenge(is_continue, group_id, qqid, boss_num, behalf, False)
 
 	group:Clan_group = Clan_group.get_or_none(group_id=group_id)
 	if group is None: raise GroupNotExist
@@ -539,7 +541,7 @@ def challenge(self,
 	now_cycle_boss_health = safe_load_json(group.now_cycle_boss_health, {})
 	next_cycle_boss_health = safe_load_json(group.next_cycle_boss_health, {})
 	real_cycle_boss_health = now_cycle_boss_health
-	is_continue = challenging_member_list[boss_num][str(qqid)]['is_continue']
+	is_continue = is_continue or challenging_member_list[boss_num][str(qqid)]['is_continue']
 	if now_cycle_boss_health[boss_num] == 0 and next_cycle_boss_health[boss_num] != 0:
 		boss_cycle += 1
 		real_cycle_boss_health = next_cycle_boss_health
@@ -574,6 +576,12 @@ def challenge(self,
 	if finished >= 3:
 		if previous_day: raise InputError('昨日上报次数已达到3次')
 		raise InputError('今日上报次数已达到3次')
+	#出了多少刀补偿
+	all_cont_blade = sum(bool(c.is_continue) for c in challenges)
+	#剩余多少刀补偿
+	cont_blade = len(challenges) - finished - all_cont_blade
+	if is_continue and cont_blade == 0:
+		raise GroupError('您没有补偿刀')
 
 	if defeat:
 		boss_health_remain = 0
@@ -1239,7 +1247,7 @@ def get_report(self,
 			'challenge_pcrtime': c.challenge_pcrtime,
 			'cycle': c.boss_cycle,
 			'boss_num': c.boss_num,
-			'health_ramain': c.boss_health_remain,
+			'health_remain': c.boss_health_remain,
 			'damage': c.challenge_damage,
 			'is_continue': c.is_continue,
 			'message': c.message,
