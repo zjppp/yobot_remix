@@ -1,3 +1,11 @@
+"""
+实例3：作为nonebot的插件
+
+加载方法：
+
+将这个项目整个文件夹放在nonebot插件目录下即可
+"""
+
 import sys
 
 if __name__ == "__main__":
@@ -22,7 +30,6 @@ if __name__ == "__main__":
 from .yobot import Yobot
 import asyncio
 
-
 if "nonebot" in sys.modules:
     from nonebot import get_bot, scheduler
 else:
@@ -30,29 +37,45 @@ else:
 
 verinfo = {
     "run-as": "nonebot-plugin",
-    "ver_name": "yobot{}插件版".format(Yobot.Version),
+    "ver_name": "yobot_remix{}插件版".format(Yobot.Version),
 }
 
 cqbot = get_bot()
-bot = Yobot(data_path="./yobot_data",
-            verinfo=verinfo,
-            scheduler=scheduler,
-            quart_app=cqbot.server_app,
-            bot_api=cqbot._api,
-            )
+bot = Yobot(
+    data_path="./yobot_data",
+    verinfo=verinfo,
+    scheduler=scheduler,
+    quart_app=cqbot.server_app,
+    bot_api=cqbot._api,
+)
+
+from hoshino.service import Service
+
+sv = Service("yobot_remix", enable_on_default=False, visible=True)
 
 
-@cqbot.on_message
-async def handle_msg(context):
+@sv.on_message(event=None)
+async def handle_msg(cqbot, context):
     if context["message_type"] == "group" or context["message_type"] == "private":
         reply = await bot.proc_async(context.copy())
     else:
         reply = None
     if reply != "" and reply is not None:
-        return {'reply': reply,
-                'at_sender': False}
+        """return {'reply': reply,'at_sender': False}"""
+        await cqbot.send(context, reply, at_sender=False)
     else:
         return None
+
+# @cqbot.on_message
+# async def handle_msg(context):
+#     if context["message_type"] == "group" or context["message_type"] == "private":
+#         reply = await bot.proc_async(context.copy())
+#     else:
+#         reply = None
+#     if reply != "" and reply is not None:
+#         return {"reply": reply, "at_sender": False}
+#     else:
+#         return None
 
 
 async def send_it(func):
@@ -66,6 +89,7 @@ async def send_it(func):
         await asyncio.sleep(5)
         await cqbot.send_msg(**kwargs)
 
+
 jobs = bot.active_jobs()
 if jobs:
     for trigger, job in jobs:
@@ -78,5 +102,5 @@ if jobs:
             misfire_grace_time=60,
         )
 
-__plugin_name__ = 'yobot'
-__plugin_usage__ = 'pcr assistant bot'
+__plugin_name__ = "yobot"
+__plugin_usage__ = "pcr assistant bot"
