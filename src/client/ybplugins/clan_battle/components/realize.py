@@ -335,6 +335,7 @@ def clear_data_slot(self, group_id: Groupid, battle_id: Optional[int] = None):
 	group:Clan_group = Clan_group.get_or_none(group_id=group_id)
 	if group is None:
 		raise GroupNotExist
+
 	now_cycle_boss_health = {}
 	level = self._level_by_cycle(1, group.game_server)
 	for boss_num, health in enumerate(self.bossinfo[group.game_server][level]):
@@ -343,11 +344,12 @@ def clear_data_slot(self, group_id: Groupid, battle_id: Optional[int] = None):
 	level = self._level_by_cycle(2, group.game_server)
 	for boss_num, health in enumerate(self.bossinfo[group.game_server][level]):
 		next_cycle_boss_health[boss_num+1] = health
-	
-	group.now_cycle_boss_health = now_cycle_boss_health
-	group.next_cycle_boss_health = next_cycle_boss_health
+
+	group.now_cycle_boss_health = json.dumps(now_cycle_boss_health)
+	group.next_cycle_boss_health = json.dumps(next_cycle_boss_health)
 	group.boss_cycle = 1
 	group.challenging_member_list = None
+	group.subscribe_list = None
 	group.challenging_start_time = 0
 
 	group.save()
@@ -489,7 +491,7 @@ def challenge(self,
 				defeat: bool,
 				damage = 0,
 				behalfed:QQid = None,
-				is_continue = None,
+				is_continue = False,
 				*,
 				boss_num = None,
 				previous_day = False,
