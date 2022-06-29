@@ -261,18 +261,18 @@ def modify(self, group_id: Groupid, cycle=None, bossData=None):
 	group:Clan_group = Clan_group.get_or_none(group_id=group_id)
 	if group is None: raise GroupNotExist
 
-	set_cycle_level = self._level_by_cycle(cycle and cycle or group.boss_cycle, group.game_server)
+	next_cycle_level = self._level_by_cycle(cycle and cycle+1 or group.boss_cycle+1, group.game_server)
 	now_health = safe_load_json(group.now_cycle_boss_health, {})
 	next_health = safe_load_json(group.next_cycle_boss_health, {})
 
 	for boss_num, data in bossData.items():
-		full_boss_health = self.setting['boss'][group.game_server][set_cycle_level][int(boss_num)-1]
+		next_cycle_full_boss_health = self.setting['boss'][group.game_server][next_cycle_level][int(boss_num)-1]
 		if data["is_next"]:
 			now_health[boss_num] = 0
 			next_health[boss_num] = data["health"]
 		else:
 			now_health[boss_num] = data["health"]
-			next_health[boss_num] = full_boss_health
+			next_health[boss_num] = next_cycle_full_boss_health
 	
 	group.now_cycle_boss_health = json.dumps(now_health)
 	group.next_cycle_boss_health = json.dumps(next_health)
