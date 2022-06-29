@@ -54,7 +54,7 @@ from hoshino.service import Service
 sv = Service("yobot_remix", enable_on_default=True, visible=True)
 
 
-@sv.on_message(event=None)
+@sv.on_message()
 async def handle_msg(cqbot, context):
     if context["message_type"] == "group" or context["message_type"] == "private":
         reply = await bot.proc_async(context.copy())
@@ -66,16 +66,16 @@ async def handle_msg(cqbot, context):
     else:
         return None
 
-# @cqbot.on_message
-# async def handle_msg(context):
-#     if context["message_type"] == "group" or context["message_type"] == "private":
-#         reply = await bot.proc_async(context.copy())
-#     else:
-#         reply = None
-#     if reply != "" and reply is not None:
-#         return {"reply": reply, "at_sender": False}
-#     else:
-#         return None
+@cqbot.on_message
+async def handle_msg(context):
+    if context["message_type"] == "private":
+        reply = await bot.proc_async(context.copy())
+    else:
+        reply = None
+    if reply != "" and reply is not None:
+        return {"reply": reply, "at_sender": False}
+    else:
+        return None
 
 
 async def send_it(func):
