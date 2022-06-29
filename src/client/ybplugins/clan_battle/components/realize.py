@@ -614,11 +614,11 @@ def challenge(self,
 			if _health == 0: all_clear += 1
 		if all_clear == 5:			# 检查当前周目的boss是否已经全部击杀
 			group.boss_cycle += 1	# 进入下一周目
-			level = self._level_by_cycle(group.boss_cycle, group.game_server)
+			next_cycle_level = self._level_by_cycle(group.boss_cycle+1, group.game_server)
 			for _boss_num, _health in next_cycle_boss_health.items():# 血量数据挪移
 				now_cycle_boss_health[_boss_num] = _health
 				if _health == 0: subscribe_remind(self, group_id, _boss_num)# 如果挪过来的血量为0，则发送预约提醒
-			for boss_num_, health_ in enumerate(self.bossinfo[group.game_server][level]):# 获取新血量数据放到下周目
+			for boss_num_, health_ in enumerate(self.bossinfo[group.game_server][next_cycle_level]):# 获取新血量数据放到下周目
 				next_cycle_boss_health[str(boss_num_+1)] = health_
 		else: real_cycle_boss_health[boss_num] = 0
 

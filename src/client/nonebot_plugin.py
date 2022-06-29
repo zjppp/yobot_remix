@@ -51,7 +51,7 @@ bot = Yobot(
 
 from hoshino.service import Service
 
-sv = Service("yobot_remix", enable_on_default=False, visible=True)
+sv = Service("yobot_remix", enable_on_default=True, visible=True)
 
 
 @sv.on_message(event=None)
