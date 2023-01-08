@@ -509,15 +509,17 @@ def challenge(self,
 	"""
 	if (not defeat) and (damage is None): raise InputError('未击败boss需要提供伤害值')
 	if (not defeat) and (damage < 0): raise InputError('伤害不可以是负数')
-	user = User.get_or_none(qqid=qqid)
-	if user is None: raise UserNotInGroup
 
 	behalf = None
+	#此处往下qqid定义变更为真正造成伤害的成员的QQ号，behalf为代刀人QQ号
 	if behalfed is not None:
 		behalfed = int(behalfed)
 		behalf = qqid
 		qqid = behalfed
 	if qqid == behalf: behalf = None
+
+	membership = Clan_member.get_or_none(group_id=group_id, qqid=qqid)
+	if membership is None: raise UserNotInGroup
 
 	#若已申请出刀且指定报刀boss，优先选择指定报刀boss
 	if boss_num and self.check_blade(group_id, qqid):
@@ -900,8 +902,8 @@ def apply_for_challenge(self, is_continue, group_id:Groupid, qqid:QQid, boss_num
 	behalf = None
 	challenger = behalfed and behalfed or qqid
 	if behalfed : behalf = qqid
-	user = User.get_or_none(challenger)
-	if user is None:raise UserNotInGroup
+	membership = Clan_member.get_or_none(group_id=group_id, qqid=challenger)
+	if membership is None:raise UserNotInGroup
 
 	if self.check_blade(group_id, challenger):
 		raise GroupError('你已经申请过了 (╯‵□′)╯︵┻━┻')
