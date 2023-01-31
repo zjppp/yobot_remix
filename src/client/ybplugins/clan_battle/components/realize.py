@@ -39,7 +39,7 @@ def text_2_pic(self, text:string, weight:int, height:int, bg_color:Tuple, text_c
 #阶段周目
 def _level_by_cycle(self, cycle, game_server=None):
 	level = 0
-	for lv in self.setting['level_by_cycle'][game_server]:
+	for lv in self.level_by_cycle[game_server]:
 		if cycle >= lv[0] and cycle <= lv[1] : return level
 		level += 1
 	return level

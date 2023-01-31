@@ -25,6 +25,7 @@ def init(self,
 	self.setting = glo_setting
 	self.boss_id_name = boss_id_name
 	self.bossinfo = glo_setting['boss']
+	self.level_by_cycle = glo_setting['level_by_cycle']
 	self.api = bot_api
 
 	# log
