@@ -9,7 +9,7 @@ from aiocqhttp.api import Api
 from apscheduler.triggers.cron import CronTrigger
 
 from ...ybdata import Clan_group, Clan_member, User
-from ..exception import ClanBattleError
+from ..exception import ClanBattleError, InputError
 from ..util import atqq
 from .define import Commands, Server
 
@@ -252,7 +252,6 @@ def execute(self, match_num, ctx):
 		b = match.group(1)
 		boss_num = match.group(2) and match.group(2)
 		behalf = match.group(3) and int(match.group(3))
-		msg = ''
 		if behalf:
 			user_id = behalf
 		try:
@@ -268,7 +267,8 @@ def execute(self, match_num, ctx):
 				msg =  self.save_slot(group_id, user_id, clean_flag = True)
 			elif b == '预约':
 				msg = self.subscribe_cancel(group_id, boss_num, user_id)
-			else: return
+			else:
+				raise InputError("未能识别命令：{}".format(b))
 		except ClanBattleError as e:
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
