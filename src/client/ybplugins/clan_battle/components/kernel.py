@@ -9,7 +9,7 @@ from aiocqhttp.api import Api
 from apscheduler.triggers.cron import CronTrigger
 
 from ...ybdata import Clan_group, Clan_member, User
-from ..exception import ClanBattleError
+from ..exception import ClanBattleError, InputError
 from ..util import atqq
 from .define import Commands, Server
 
@@ -252,22 +252,26 @@ def execute(self, match_num, ctx):
 		b = match.group(1)
 		boss_num = match.group(2) and match.group(2)
 		behalf = match.group(3) and int(match.group(3))
-		msg = ''
 		if behalf:
 			user_id = behalf
-		if b == '挂树':
-			msg = self.take_it_of_the_tree(group_id, user_id)
-		elif b == '出刀' or b == '申请' or b == '申请出刀':
-			msg =  self.cancel_blade(group_id, user_id)
-		elif b == '出刀all':
-			msg =  self.cancel_blade(group_id, user_id, cancel_type=0)
-		elif b == '报伤害':
-			msg =  self.report_hurt(0, 0, group_id, user_id, 1)
-		elif b == 'sl' or b == 'SL':
-			msg =  self.save_slot(group_id, user_id, clean_flag = True)
-		elif b == '预约':
-			msg = self.subscribe_cancel(group_id, boss_num, user_id)
-		else: return
+		try:
+			if b == '挂树':
+				msg = self.take_it_of_the_tree(group_id, user_id)
+			elif b == '出刀' or b == '申请' or b == '申请出刀':
+				msg =  self.cancel_blade(group_id, user_id)
+			elif b == '出刀all':
+				msg =  self.cancel_blade(group_id, user_id, cancel_type=0)
+			elif b == '报伤害':
+				msg =  self.report_hurt(0, 0, group_id, user_id, 1)
+			elif b == 'sl' or b == 'SL':
+				msg =  self.save_slot(group_id, user_id, clean_flag = True)
+			elif b == '预约':
+				msg = self.subscribe_cancel(group_id, boss_num, user_id)
+			else:
+				raise InputError("未能识别命令：{}".format(b))
+		except ClanBattleError as e:
+			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+			return str(e)
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
 		return msg
 
