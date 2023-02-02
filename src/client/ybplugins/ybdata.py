@@ -1,11 +1,12 @@
 from peewee import *
 from playhouse.migrate import SqliteMigrator, migrate
+import json
 
 from .web_util import rand_string
 
 db_mode = True  # True为本地（原），Flase为为改为mysql（需要在第15行配置使用）
 
-_version = 1  # 目前版本
+_version = 2  # 目前版本
 MAX_TRY_TIMES = 5
 
 if db_mode:
@@ -91,7 +92,7 @@ class Clan_group(_BaseModel):
     #       }, }
     challenging_member_list = TextField(null=True)
 
-    # 预约表（json格式文本） 结构：{boss_num:[qqid, ], }
+    # 预约表（json格式文本） 结构：{boss_num:{qqid: message, }, }
     subscribe_list = TextField(null=True)
 
     challenging_start_time = BigIntegerField(default=0)
@@ -198,5 +199,25 @@ def db_upgrade(old_version):
     migrator = SqliteMigrator(_db)
     if old_version < 2:
         pass
+    if old_version == 1:
+        """
+        更新预约表存储结构
+        原结构: Dict[str, List[int]] = {Boss编号: [预约QQ号]}
+        新结构: Dict[str, Dict[str, str]] = {Boss编号: {预约QQ号: 留言}}
+        """
+        for group in Clan_group.select():
+            old_subscribe_list = group.subscribe_list
+            if old_subscribe_list:
+                old_subscribe_list = json.loads(old_subscribe_list)
+                new_subscribe_list = {}
+                for old_boss_no, old_qq_list in old_subscribe_list.items():
+                    if old_boss_no not in new_subscribe_list:
+                        new_subscribe_list[old_boss_no] = {}
+                    for this_old_qq in old_qq_list:
+                        this_old_qq = str(this_old_qq)
+                        new_subscribe_list[old_boss_no][this_old_qq] = None
+                new_subscribe_list = json.dumps(new_subscribe_list)
+                group.subscribe_list = new_subscribe_list
+                group.save()
 
     DB_schema.replace(key="version", value=str(_version)).execute()

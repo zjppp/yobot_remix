@@ -704,7 +704,7 @@ def undo(self, group_id: Groupid, qqid: QQid) :
 	return msg
 
 #预约x/预约表
-def subscribe(self, group_id:Groupid, qqid:QQid, msg):
+def subscribe(self, group_id:Groupid, qqid:QQid, msg, note):
 	"""
 	预约某个boss或查看所有已预约的玩家
 
@@ -712,32 +712,32 @@ def subscribe(self, group_id:Groupid, qqid:QQid, msg):
 		msg: 第几个王 or '表'
 	"""
 	group:Clan_group = Clan_group.get_or_none(group_id=group_id)
+	qqid_str = str(qqid) # JSON类型key必须为str
 	if group is None: raise GroupNotExist
 	if not msg: GroupError('您预约了一个空气')
 	if msg == '表':
 		back_msg = []
-		if group.subscribe_list is None:
-			raise GroupError('目前没有人预约任意一个boss')
 		subscribe_list = safe_load_json(group.subscribe_list, {})
+		if not subscribe_list:
+			raise GroupError('目前没有人预约任意一个Boss')
+		back_msg.append("预约表：")
 		for boss_num in range(5):
 			real_num = str(boss_num + 1)
-			boss_msg = f'{real_num}王：'
-			if real_num in subscribe_list:
-				for boss_qqid in subscribe_list[real_num]:
-					boss_msg += f'{self._get_nickname_by_qqid(int(boss_qqid))} '
-			else:
-				boss_msg += '无人预约'
-			back_msg.append(boss_msg)
+			if (real_num not in subscribe_list) or (not subscribe_list[real_num]):
+				continue
+			back_msg.append(f'==={real_num}号Boss===')
+			for boss_qqid, qqid_note in subscribe_list[real_num].items():
+				back_msg.append(f'{self._get_nickname_by_qqid(int(boss_qqid))}' + (f'：{qqid_note}' if qqid_note else ''))
+		back_msg.append('='*12)
 		return '\n'.join(back_msg)
 	else:
 		subscribe_list = safe_load_json(group.subscribe_list, {})
 		boss_num = msg
-		if boss_num in subscribe_list:
-			if qqid in subscribe_list[boss_num]:
-				raise GroupError('你已经预约过这个boss啦 (╯‵□′)╯︵┻━┻')
-			subscribe_list[boss_num].append(qqid)
-		else:
-			subscribe_list[boss_num] = [qqid]
+		if boss_num not in subscribe_list:
+			subscribe_list[boss_num] = {}
+		if qqid_str in subscribe_list[boss_num]:
+			raise GroupError('你已经预约过这个boss啦 (╯‵□′)╯︵┻━┻')
+		subscribe_list[boss_num][qqid_str] = note
 		group.subscribe_list = json.dumps(subscribe_list)
 		group.save()
 		return f'预约{boss_num}王成功！下个{boss_num}王出现时会at提醒。'
@@ -747,10 +747,15 @@ def subscribe_remind(self, group_id:Groupid, boss_num):
 	group:Clan_group = Clan_group.get_or_none(group_id=group_id)
 	subscribe_list = safe_load_json(group.subscribe_list, {})
 	if len(subscribe_list) == 0 or boss_num not in subscribe_list: return
-	qqid_list = subscribe_list[boss_num]
+	hint_message = f'船新的{boss_num}王来惹~ _(:з)∠)_\n'
+	for i, j in subscribe_list[boss_num].items():
+		hint_message += atqq(int(i))
+		hint_message += ('：' + j) if j else ''
+		hint_message += '\n'
+	hint_message = hint_message[:-1]
 	asyncio.ensure_future(self.api.send_group_msg(
 		group_id = group_id,
-		message = f'船新的{boss_num}王来惹~ _(:з)∠)_\n' + ' '.join(atqq(qqid) for qqid in qqid_list),
+		message = hint_message,
 	))
 	subscribe_cancel(self, group_id, boss_num)
 
@@ -771,9 +776,10 @@ def subscribe_cancel(self, group_id:Groupid, boss_num, qqid = None):
 	if not qqid:
 		del subscribe_list[boss_num]
 	else:
-		if qqid not in subscribe_list[boss_num]:
+		qqid_str = str(qqid) # JSON类型key必须为str
+		if qqid_str not in subscribe_list[boss_num]:
 			raise GroupError('您还没有预约这个boss')
-		subscribe_list[boss_num].remove(qqid)
+		subscribe_list[boss_num].pop(qqid_str)
 		if len(subscribe_list[boss_num]) == 0:
 			del subscribe_list[boss_num]
 	group.subscribe_list = json.dumps(subscribe_list)
@@ -792,6 +798,7 @@ def get_subscribe_list(self, group_id: Groupid):
 	subscribe_list = safe_load_json(group.subscribe_list, {})
 	back_info = []
 	for boss_num, qqid_list in subscribe_list.items():
+		qqid_list = list(map(int, qqid_list.keys()))
 		back_info.append({
 			'boss': int(boss_num),
 			'qqid': qqid_list,
