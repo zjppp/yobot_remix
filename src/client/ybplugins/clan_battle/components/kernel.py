@@ -187,11 +187,12 @@ def execute(self, match_num, ctx):
 		return boss_status
 
 	elif match_num == 7:  # 预约
-		match = re.match(r'^预约([1-5]|表) *$', cmd)
+		match = re.match(r'^预约([1-5]|表) *([:：](.*))?$', cmd)
 		if not match: return
 		msg = match.group(1)
+		note = match.group(3) or None
 		try:
-			back_msg = self.subscribe(group_id, user_id, msg)
+			back_msg = self.subscribe(group_id, user_id, msg, note)
 		except ClanBattleError as e:
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
