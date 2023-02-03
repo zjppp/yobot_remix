@@ -199,7 +199,7 @@ def db_upgrade(old_version):
     migrator = SqliteMigrator(_db)
     if old_version < 2:
         pass
-    if old_version == 1:
+    if old_version <= 1:
         """
         更新预约表存储结构
         原结构: Dict[str, List[int]] = {Boss编号: [预约QQ号]}
@@ -207,17 +207,18 @@ def db_upgrade(old_version):
         """
         for group in Clan_group.select():
             old_subscribe_list = group.subscribe_list
-            if old_subscribe_list:
-                old_subscribe_list = json.loads(old_subscribe_list)
-                new_subscribe_list = {}
-                for old_boss_no, old_qq_list in old_subscribe_list.items():
-                    if old_boss_no not in new_subscribe_list:
-                        new_subscribe_list[old_boss_no] = {}
-                    for this_old_qq in old_qq_list:
-                        this_old_qq = str(this_old_qq)
-                        new_subscribe_list[old_boss_no][this_old_qq] = None
-                new_subscribe_list = json.dumps(new_subscribe_list)
-                group.subscribe_list = new_subscribe_list
-                group.save()
+            if not old_subscribe_list:
+                continue
+            old_subscribe_list = json.loads(old_subscribe_list)
+            new_subscribe_list = {}
+            for old_boss_no, old_qq_list in old_subscribe_list.items():
+                if old_boss_no not in new_subscribe_list:
+                    new_subscribe_list[old_boss_no] = {}
+                for this_old_qq in old_qq_list:
+                    this_old_qq = str(this_old_qq)
+                    new_subscribe_list[old_boss_no][this_old_qq] = None
+            new_subscribe_list = json.dumps(new_subscribe_list)
+            group.subscribe_list = new_subscribe_list
+            group.save()
 
     DB_schema.replace(key="version", value=str(_version)).execute()
