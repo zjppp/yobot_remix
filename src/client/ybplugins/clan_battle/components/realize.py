@@ -439,6 +439,25 @@ def switch_data_slot(self, group_id: Groupid, battle_id: int):
 	group.save()
 	_logger.info(f'群{group_id}切换至{battle_id}号存档')
 
+def _get_available_empty_battle_id(self, group_id: int) -> int:
+	"""
+	获取最靠前且未使用的档案编号
+
+	:param group_id: QQ群号
+	"""
+	group = Clan_group.get_or_none(group_id=group_id)
+	if group is None: raise GroupNotExist
+	statement = Clan_challenge.select(Clan_challenge.bid).where(Clan_challenge.gid == group_id).group_by(Clan_challenge.bid)
+	counts = statement.count()
+	def bid_generator():
+		for i in statement.order_by(Clan_challenge.bid):
+			yield i
+	temp = bid_generator()
+	for i in range(counts): # 查找并返回档案编号中被跳过使用的编号
+		if i != next(temp).bid:
+			return i
+	return counts # 档案都已按照顺序使用，则返回顺序下新档案编号，因档案编号从0开始所以无需+1
+
 #向指定个人私聊发送提醒
 async def send_private_remind(self, member_list:List[QQid] = None, member_id:QQid = None, content: str = None):
 	if member_list:

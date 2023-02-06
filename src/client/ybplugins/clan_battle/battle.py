@@ -8,7 +8,7 @@ from .components.score import score_table
 from .components.realize import (_level_by_cycle, _get_nickname_by_qqid,
 				_get_group_previous_challenge, _update_group_list_async, 
 				_fetch_member_list_async, _update_all_group_members_async,
-				_update_user_nickname_async, _boss_data_dict,
+				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id,
 
 				create_group, bind_group, drop_member, boss_status_summary, challenge,
 				undo, challenger_info, challenger_info_small, modify, change_game_server,
@@ -52,6 +52,7 @@ class ClanBattle:
 	_update_all_group_members_async = _update_all_group_members_async	##更新所有群成员
 	_update_user_nickname_async = _update_user_nickname_async			##更新成员名字
 	_boss_data_dict = _boss_data_dict									##获取boss当前数据
+	_get_available_empty_battle_id = _get_available_empty_battle_id		##获取公会最靠前的空白档案号
 
 	create_group = create_group								##创建公会
 	bind_group = bind_group									##加入公会
