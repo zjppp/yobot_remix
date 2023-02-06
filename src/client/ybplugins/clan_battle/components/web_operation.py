@@ -339,7 +339,7 @@ def register_routes(self, app: Quart):
 			elif action == 'add_subscribe':
 				boss_num = payload['boss_num']
 				message = payload.get('message')
-				try:self.subscribe(group_id, user_id, str(boss_num))
+				try:self.subscribe(group_id, user_id, str(boss_num), message)
 				except ClanBattleError as e:
 					_logger.info('网页 失败 {} {} {}'.format(user_id, group_id, action))
 					return jsonify(code = 10, message = str(e))

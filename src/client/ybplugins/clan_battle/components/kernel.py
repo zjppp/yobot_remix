@@ -27,6 +27,7 @@ def init(self,
 	self.bossinfo = glo_setting['boss']
 	self.level_by_cycle = glo_setting['level_by_cycle']
 	self.api = bot_api
+	self.group_data_list = {}
 
 	# log
 	if not os.path.exists(os.path.join(glo_setting['dirname'], 'log')):
