@@ -445,7 +445,7 @@ def _get_available_empty_battle_id(self, group_id: int) -> int:
 
 	:param group_id: QQ群号
 	"""
-	group = Clan_group.get_or_none(group_id=group_id)
+	group = get_clan_group(self, group_id=group_id)
 	if group is None: raise GroupNotExist
 	statement = Clan_challenge.select(Clan_challenge.bid).where(Clan_challenge.gid == group_id).group_by(Clan_challenge.bid)
 	counts = statement.count()
@@ -740,7 +740,6 @@ def subscribe(self, group_id:Groupid, qqid:QQid, msg, note):
 		msg: 第几个王 or '表'
 	"""
 	group:Clan_group = get_clan_group(self, group_id)
-	qqid_str = str(qqid) # JSON类型key必须为str
 	if group is None: raise GroupNotExist
 	if not msg: GroupError('您预约了一个空气')
 	subscribe_handler = SubscribeHandler(group=group)
@@ -793,7 +792,7 @@ def subscribe_cancel(self, group_id:Groupid, boss_num, qqid = None):
 		qqid: 不填为删除特定boss的整个预约记录，填则删除特定用户的单个预约记录
 	'''
 	group:Clan_group = get_clan_group(self, group_id)
-	if not boss_num: GroupError('您取消了个寂寞')
+	if not boss_num: raise GroupError('您取消了个寂寞')
 	subscribe_handler = SubscribeHandler(group=group)
 	boss_num = int(boss_num)
 	if not qqid:
