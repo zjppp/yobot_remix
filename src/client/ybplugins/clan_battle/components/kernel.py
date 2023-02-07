@@ -130,7 +130,11 @@ def execute(self, match_num, ctx):
 
 	elif match_num == 4:  # 报刀
 		match = re.match(r'^报刀 ?(?:[\-\=]([1-5]))? ?(\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
-		if not match: return '报刀格式:\n报刀 100w（需先申请出刀）\n报刀 -1 100w（-1表示报在1王）'
+		if not match:
+			# 尝试使用另外的匹配模式
+			match = re.match(r'^报刀 ?([1-5])? (\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+			if not match:
+				return '报刀格式:\n报刀 100w（需先申请出刀）\n报刀 -1 100w（-1表示报在1王）'
 		unit = {
 			'W': 10000,
 			'w': 10000,
@@ -188,10 +192,10 @@ def execute(self, match_num, ctx):
 		return boss_status
 
 	elif match_num == 7:  # 预约
-		match = re.match(r'^预约([1-5]|表) *([:：](.*))?$', cmd)
+		match = re.match(r'^预约([1-5]|表) *(?:[:：](.*))?$', cmd)
 		if not match: return
 		msg = match.group(1)
-		note = match.group(3) or None
+		note = match.group(2) or None
 		try:
 			back_msg = self.subscribe(group_id, user_id, msg, note)
 		except ClanBattleError as e:
@@ -340,6 +344,22 @@ def execute(self, match_num, ctx):
 	elif match_num == 19:  #更改预约模式
 	#TODO 19:更改预约模式
 		print("完成度0%")
+
+	elif match_num == 20:  #重置进度
+		if cmd != "重置进度":
+			return
+		try:
+			if (ctx['sender']['role'] not in ['owner', 'admin']) and (ctx['user_id'] not in self.setting['super-admin']):
+				return '只有管理员或主人可使用重置进度功能'
+			available_empty_battle_id = self._get_available_empty_battle_id(group_id)
+			group = Clan_group.get_or_none(group_id=group_id)
+			current_data_slot_record = group.battle_id
+			self.switch_data_slot(group_id, available_empty_battle_id)
+		except ClanBattleError as e:
+			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+			return str(e)
+		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+		return "进度已重置\n当前档案编号已从 {} 切换为 {}".format(current_data_slot_record, available_empty_battle_id)
 
 
 
