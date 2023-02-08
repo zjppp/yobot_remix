@@ -43,7 +43,8 @@ def get_clan_group(self, group_id):
 		return self.group_data_list[group_id]
 	else:
 		group:Clan_group = Clan_group.get_or_none(group_id=group_id)
-		self.group_data_list[group_id] = group
+		if group is not None:
+			self.group_data_list[group_id] = group
 		return group
 
 #阶段周目
