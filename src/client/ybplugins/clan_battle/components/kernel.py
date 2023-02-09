@@ -56,6 +56,14 @@ def init(self,
 		User.qqid.in_(self.setting['super-admin'])
 	).execute()
 
+	from pathlib import Path
+	inipath = Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
+	if not inipath.exists():
+		if not (Path(os.path.dirname(__file__)).parents[2] / 'yobot_data').exists():
+			os.mkdir(str(Path(os.path.dirname(__file__)).parents[2] / 'yobot_data'))
+		inipath.touch()
+		with open(inipath,'w') as f:
+			f.write('[GROUPS]\n11111 = 22222')
 
 #定时任务
 def jobs(self):
