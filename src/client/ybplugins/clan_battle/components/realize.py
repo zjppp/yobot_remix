@@ -19,6 +19,7 @@ from ..util import atqq, pcr_datetime, pcr_timestamp, timed_cached_func
 
 from ...ybdata import Clan_challenge, Clan_group, Clan_member, User, Clan_group_backups
 from ..exception import GroupError, GroupNotExist, InputError, UserError, UserNotInGroup
+from .multi_cq_utils import who_am_i
 
 _logger = logging.getLogger(__name__)
 FILE_PATH = os.path.dirname(__file__)
@@ -100,6 +101,7 @@ async def _fetch_member_list_async(self, group_id):
 	except Exception as e:
 		_logger.exception('获取群成员列表错误' + str(type(e)) + str(e))
 		asyncio.ensure_future(self.api.send_group_msg(
+			# FIXME:多CQ
 			group_id = group_id, message = '获取群成员错误，这可能是缓存问题，请重启go-cqhttp后再试'))
 		return []
 	return group_member_list
@@ -500,6 +502,7 @@ def send_remind(self,
 	else:
 		message = ' '.join(atqq(qqid) for qqid in member_list)
 		asyncio.ensure_future(self.api.send_group_msg(
+			self_id = who_am_i(group_id), 
 			group_id=group_id,
 			message=message+f'\n=======\n{sender_name}提醒您及时完成今日出刀',
 		))
@@ -778,6 +781,7 @@ def subscribe_remind(self, group_id:Groupid, boss_num):
 		hint_message += '\n'
 	hint_message = hint_message[:-1]
 	asyncio.ensure_future(self.api.send_group_msg(
+		self_id = who_am_i(group_id), 
 		group_id = group_id,
 		message = hint_message,
 	))
@@ -891,6 +895,7 @@ def take_it_of_the_tree(self, group_id: Groupid, qqid: QQid, boss_num=0, take_it
 			if info['tree']: notice.append(atqq(challenger))
 		if len(notice) > 0:
 			asyncio.ensure_future(self.api.send_group_msg(
+				self_id = who_am_i(group_id), 
 				group_id = group_id,
 				message = '可以下树惹~ _(:з)∠)_\n'+'\n'.join(notice),
 			))

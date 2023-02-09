@@ -79,7 +79,7 @@ class Custom:
         # 多CQ适配：触发写入ini，群号=bot号
         cmd = ctx['raw_message']
         if cmd == '手动添加群记录' or cmd == '修复网页催刀':
-            print(ctx)
+            # print(ctx)
             config=configparser.RawConfigParser()
             config.read(str(self.inipath))
             config.set('GROUPS', str(ctx['group_id']), str(ctx['self_id']))

@@ -96,8 +96,17 @@ def execute(self, match_num, ctx):
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+		from pathlib import Path
+		import configparser
+		inipath = Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
+		config=configparser.RawConfigParser()
+		config.read(str(inipath))
+		config.set('GROUPS', str(ctx['group_id']), str(ctx['self_id']))
+		with open(str(self.inipath),'w') as f:
+			config.write(f)
 		return ('公会创建成功，请登录后台查看，公会战成员请发送“加入公会”，'
-				'或管理员发送“加入全部成员”')
+				'或管理员发送“加入全部成员”'
+				'如果无法正常使用网页催刀功能，请发送“手动添加群记录”')
 
 
 	elif match_num == 2:  # 加入
