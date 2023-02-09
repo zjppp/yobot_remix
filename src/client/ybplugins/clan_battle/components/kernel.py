@@ -102,7 +102,7 @@ def execute(self, match_num, ctx):
 		config=configparser.RawConfigParser()
 		config.read(str(inipath))
 		config.set('GROUPS', str(ctx['group_id']), str(ctx['self_id']))
-		with open(str(self.inipath),'w') as f:
+		with open(str(inipath),'w') as f:
 			config.write(f)
 		return ('公会创建成功，请登录后台查看，公会战成员请发送“加入公会”，'
 				'或管理员发送“加入全部成员”'
