@@ -9,6 +9,7 @@ from ...templating import render_template
 from ...ybdata import Clan_group, Clan_member, User
 from ..exception import ClanBattleError
 from ..util import pcr_datetime, atqq
+from .multi_cq_utils import who_am_i
 
 _logger = logging.getLogger(__name__)
 
@@ -196,6 +197,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x01:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id=group_id,
 							message=str(status),
 						)
@@ -219,6 +221,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x02:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id=group_id,
 							message=str(status),
 						)
@@ -244,6 +247,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x04:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id = group_id,
 							message = atqq(behalf)+status,
 						)
@@ -263,6 +267,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x08:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id = group_id,
 							message = atqq(behalf)+status,
 						)
@@ -282,6 +287,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x08:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id = group_id,
 							message = atqq(behalf)+status,
 						)
@@ -301,6 +307,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x08:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id = group_id,
 							message = atqq(behalf)+status,
 						)
@@ -325,6 +332,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x200:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id=group_id,
 							message=(self._get_nickname_by_qqid(sl_member_qqid) + f'已{sw}SL记录'),
 						)
@@ -353,6 +361,7 @@ def register_routes(self, app: Quart):
 					if message: notice_message += '\n留言：' + message
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id = group_id,
 							message = notice_message,
 						)
@@ -369,6 +378,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x80:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id = group_id,
 							message = '{}已取消预约{}号boss'.format(user.nickname, boss_num),
 						)
@@ -392,6 +402,7 @@ def register_routes(self, app: Quart):
 				if group.notification & 0x100:
 					asyncio.ensure_future(
 						self.api.send_group_msg(
+							self_id = who_am_i(group_id),
 							group_id=group_id,
 							message=str(status),
 						)
