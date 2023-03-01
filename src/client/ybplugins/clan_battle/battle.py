@@ -5,19 +5,11 @@ from aiocqhttp.api import Api
 from .components.web_operation import register_routes
 from .components.kernel import init, execute, jobs, match
 from .components.score import score_table
+from .components.realize import *
 from .components.realize import (_level_by_cycle, _get_nickname_by_qqid,
 				_get_group_previous_challenge, _update_group_list_async, 
 				_fetch_member_list_async, _update_all_group_members_async,
-				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id,
-
-				create_group, bind_group, drop_member, boss_status_summary, challenge,
-				undo, challenger_info, challenger_info_small, modify, change_game_server,
-				get_data_slot_record_count, clear_data_slot, switch_data_slot,
-				send_private_remind, send_remind, apply_for_challenge, behelf_remind,
-				put_on_the_tree, take_it_of_the_tree, check_blade, subscribe,subscribe_cancel,
-				cancel_blade, save_slot, get_in_boss_num, report_hurt, text_2_pic,
-
-				get_report, get_battle_member_list, get_member_list, get_subscribe_list)
+				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id)
 
 
 class ClanBattle:
@@ -82,6 +74,7 @@ class ClanBattle:
 	subscribe = subscribe									##预约
 	subscribe_cancel = subscribe_cancel						##取消预约
 	get_subscribe_list = get_subscribe_list					##获取预约列表
+	challenge_record = challenge_record						##出刀记录
 
 	get_report = get_report										##获取报告
 	get_battle_member_list = get_battle_member_list				##从会战记录里获取成员列表

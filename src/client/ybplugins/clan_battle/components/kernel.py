@@ -232,6 +232,17 @@ def execute(self, match_num, ctx):
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
 		return back_msg
 
+	elif match_num == 9:  # 出刀记录
+		match = re.match(r'^出刀(记录|情况|状况|详情) *$', cmd)
+		if not match: return
+		try:
+			back_msg = self.challenge_record(group_id)
+		except ClanBattleError as e:
+			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+			return str(e)
+		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+		return back_msg
+
 	elif match_num == 11:  # 挂树
 		match = re.match(r'^挂树 *(?:[\:：](.*))? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return

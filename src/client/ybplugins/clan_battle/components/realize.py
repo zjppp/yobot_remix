@@ -1186,12 +1186,12 @@ def challenger_info(self, group_id):
 	"""
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None : raise GroupNotExist
-	date, time = pcr_datetime(area = group.game_server)
+	date, _ = pcr_datetime(area = group.game_server)
 	challenges = Clan_challenge.select().where(
-					Clan_challenge.gid == group_id,
-					Clan_challenge.bid == group.battle_id,
-					Clan_challenge.challenge_pcrdate == date,
-				).order_by(Clan_challenge.cid)
+		Clan_challenge.gid == group_id,
+		Clan_challenge.bid == group.battle_id,
+		Clan_challenge.challenge_pcrdate == date,
+	).order_by(Clan_challenge.cid)
 	end_blade_qqid = {}         #保存有尾刀未出的人的qq
 	for c in challenges:
 		#如果出完这刀时boss的血量为0，且不是收尾刀
@@ -1228,6 +1228,51 @@ def challenger_info(self, group_id):
 	
 	return back_msg
 
+#出刀记录
+def challenge_record(self, group_id):
+	group:Clan_group = get_clan_group(self, group_id)
+	if group is None : raise GroupNotExist
+	date, _ = pcr_datetime(area = group.game_server)
+	members = Clan_member.select().where(Clan_member.group_id == group_id)
+	total_blade_num = 0				#总出刀数
+	total_continue_blade_num = 0	#总补偿刀数量
+	zero_blade_members = []			#一刀没出的成员
+	blade_list = {}
+	for member in members:
+		challenge_records = Clan_challenge.select().where(
+			Clan_challenge.gid == group_id,
+			Clan_challenge.bid == group.battle_id,
+			Clan_challenge.challenge_pcrdate == date,
+			Clan_challenge.qqid == member.qqid
+		).order_by(Clan_challenge.cid)
+		if len(challenge_records) != 0:
+			member_num = 0			#单个成员出刀数
+			continue_blade_num = 0	#单个成员剩余补偿刀数量
+			for c in challenge_records:
+				if c.boss_health_remain == 0 and not c.is_continue:	#完整刀收尾算0.5刀
+					member_num += 0.5
+					continue_blade_num += 1
+				elif c.is_continue:	#补偿刀算0.5刀
+					member_num += 0.5
+					continue_blade_num -= 1
+				else: member_num += 1
+			total_blade_num += member_num
+			total_continue_blade_num += continue_blade_num
+			if member_num not in blade_list: blade_list[member_num] = 1
+			else: blade_list[member_num] += 1
+		else:
+			zero_blade_members.append(member.qqid)
+	back_msg = []
+	back_msg.append(f"待出补偿刀数量：{total_continue_blade_num}")
+	back_msg.append(f"已出0刀的成员数量：{len(zero_blade_members)}")
+	for i in range(len(zero_blade_members)):
+		name = self._get_nickname_by_qqid(zero_blade_members[i])
+		back_msg.append(f"{i == len(zero_blade_members)-1 and '┖' or '┣'}{name}")
+	for blade_num in blade_list.keys():
+		back_msg.append(f"已出{blade_num}刀：{blade_list[blade_num]}")
+	back_msg.append(f"今天已出 {total_blade_num}/{len(members)*3}")
+
+	return '\n'.join(back_msg)
 
 
 ##获取报告
