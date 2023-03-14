@@ -382,12 +382,14 @@ def execute(self, match_num, ctx):
 			available_empty_battle_id = self._get_available_empty_battle_id(group_id)
 			group = Clan_group.get_or_none(group_id=group_id)
 			current_data_slot_record = group.battle_id
+			if current_data_slot_record == available_empty_battle_id:
+				return "当前档案记录为空，无需重置"
 			self.switch_data_slot(group_id, available_empty_battle_id)
 		except ClanBattleError as e:
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
-		return "进度已重置\n当前档案编号已从 {} 切换为 {}".format(current_data_slot_record, available_empty_battle_id)
+		return "进度已重置\n档案编号： {} -> {}".format(current_data_slot_record, available_empty_battle_id)
 
 
 
