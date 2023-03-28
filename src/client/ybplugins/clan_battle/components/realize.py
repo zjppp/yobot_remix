@@ -944,7 +944,7 @@ def apply_for_challenge(self, is_continue, group_id:Groupid, qqid:QQid, boss_num
 		raise GroupError('只能挑战2个周目内且不跨阶段的同个boss，请等待该周目的boss全部击杀完毕')
 
 	d, _ = pcr_datetime(area = group.game_server)
-	challenges = Clan_challenge.select().where(
+	challenges:List[Clan_challenge] = Clan_challenge.select().where(
 		Clan_challenge.gid == group_id,
 		Clan_challenge.qqid == challenger,
 		Clan_challenge.bid == group.battle_id,
@@ -1187,7 +1187,7 @@ def challenger_info(self, group_id):
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None : raise GroupNotExist
 	date, _ = pcr_datetime(area = group.game_server)
-	challenges = Clan_challenge.select().where(
+	challenges:List[Clan_challenge] = Clan_challenge.select().where(
 		Clan_challenge.gid == group_id,
 		Clan_challenge.bid == group.battle_id,
 		Clan_challenge.challenge_pcrdate == date,
@@ -1233,13 +1233,14 @@ def challenge_record(self, group_id):
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None : raise GroupNotExist
 	date, _ = pcr_datetime(area = group.game_server)
-	members = Clan_member.select().where(Clan_member.group_id == group_id)
+	members:List[Clan_member] = Clan_member.select().where(Clan_member.group_id == group_id)
+
 	total_blade_num = 0				#总出刀数
 	total_continue_blade_num = 0	#总补偿刀数量
 	zero_blade_members = []			#一刀没出的成员
 	blade_list = {}
 	for member in members:
-		challenge_records = Clan_challenge.select().where(
+		challenge_records:List[Clan_challenge] = Clan_challenge.select().where(
 			Clan_challenge.gid == group_id,
 			Clan_challenge.bid == group.battle_id,
 			Clan_challenge.challenge_pcrdate == date,
@@ -1262,6 +1263,7 @@ def challenge_record(self, group_id):
 			else: blade_list[member_num] += 1
 		else:
 			zero_blade_members.append(member.qqid)
+
 	back_msg = []
 	back_msg.append(f"待出补偿刀数量：{total_continue_blade_num}")
 	back_msg.append(f"已出0刀的成员数量：{len(zero_blade_members)}")
@@ -1271,7 +1273,6 @@ def challenge_record(self, group_id):
 	for blade_num in blade_list.keys():
 		back_msg.append(f"已出{blade_num}刀：{blade_list[blade_num]}")
 	back_msg.append(f"今天已出 {total_blade_num}/{len(members)*3}")
-
 	return '\n'.join(back_msg)
 
 

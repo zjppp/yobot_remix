@@ -22,8 +22,8 @@ class SubscribeHandler:
             data = {}
         new_data: Dict[int, Dict[int, str]] = {}
         for boss_no, boss_subscribe_data in data.items():
+            new_boss_subscribe_data = {}
             for subscribe_qq, subscribe_note in boss_subscribe_data.items():
-                new_boss_subscribe_data = {}
                 new_boss_subscribe_data[int(subscribe_qq)] = subscribe_note
                 new_data[int(boss_no)] = new_boss_subscribe_data
         self._data: Dict[int, Dict[int, str]] = new_data
