@@ -266,7 +266,7 @@ def execute(self, match_num, ctx):
 		return msg
 
 	elif match_num == 12:  # 申请
-		match = re.match(r'^申请出刀(| )([1-5]) *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		match = re.match(r'^(?:进|申请出刀)(| )([1-5]) *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return '申请出刀格式错误惹(っ °Д °;)っ\n如：申请出刀1 or 申请出刀1补偿@xxx'
 		boss_num = match.group(2)
 		is_continue = match.group(3) and True or False
