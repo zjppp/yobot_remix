@@ -821,11 +821,12 @@ def get_subscribe_list(self, group_id: Groupid):
 	subscribe_handler = SubscribeHandler(group=group)
 	back_info = []
 	for boss_num, qqid_list in subscribe_handler.data.items():
-		back_info.append({
-			'boss': boss_num,
-			'qqid': subscribe_handler.get_subscribe_list(boss_num),
-			'message': None,
-		})
+		for qqid, msg in qqid_list.items():
+			back_info.append({
+				'boss': boss_num,
+				'qqid': qqid,
+				'message': msg,
+			})
 	return back_info
 
 #挂树
