@@ -209,10 +209,12 @@ def execute(self, match_num, ctx):
 		return boss_status
 
 	elif match_num == 7:  # 预约
-		match = re.match(r'^预约([1-5]|表) *(?:[:：](.*))?$', cmd)
+		match = re.match(r'^预约([1-5]|表) *(?:[:：](.*))? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return
 		msg = match.group(1)
-		note = match.group(2) or None
+		note = match.group(2) or ''
+		behalf = match.group(3) or None
+		if behalf : user_id = int(behalf)
 		try:
 			back_msg = self.subscribe(group_id, user_id, msg, note)
 		except ClanBattleError as e:
@@ -264,7 +266,7 @@ def execute(self, match_num, ctx):
 		return msg
 
 	elif match_num == 12:  # 申请
-		match = re.match(r'^申请出刀(| )([1-5]) *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		match = re.match(r'^(?:进|申请出刀)(| )([1-5]) *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return '申请出刀格式错误惹(っ °Д °;)っ\n如：申请出刀1 or 申请出刀1补偿@xxx'
 		boss_num = match.group(2)
 		is_continue = match.group(3) and True or False
