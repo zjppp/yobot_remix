@@ -350,7 +350,7 @@ def execute(self, match_num, ctx):
 	
 	#TODO 权限申请封装func调用
 	elif match_num == 18:  #权限，设置意外无权限用户有权限
-		match = re.match(r'^更改权限 *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		match = re.match(r'^权限 *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if match:
 			if match.group(1):
 				if ctx['sender']['role'] == 'member':
