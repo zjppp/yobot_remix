@@ -880,33 +880,34 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None):
 
 
 def query_tree(self, group_id: Groupid, user_id: QQid, boss_id=0) -> dict:
+	"""
+	Args:
+		self, group_id, user_id, boss_id(Optional):不填boss_id或给0为查询所有
+	OUTPUT:
+		{"1":[(10000, "消息：马化腾一号挂树")], "2":[($QID, $MSG)], "3":[], "4":[], "5":[]}
+	"""
 	qid = str(user_id)
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None: raise GroupNotExist
 	user = User.get_or_none(qqid=user_id)
 	if user is None: raise GroupError('请先加入公会')
 	challenging_member_list = safe_load_json(group.challenging_member_list, {})
-	# reply = ""
-	# print(challenging_member_list)
-	Result = {"1": [], "2": [], "3": [], "4": [], "5": []}
+	result = {"1": [], "2": [], "3": [], "4": [], "5": []}
 	if boss_id == 0:
-		for i in range(1,6):
-			# reply += f"挂树在{i}王的成员：\n"
+		for i in range(1, 6):
 			try:
 				for qid in challenging_member_list[str(i)]:
 					# reply += f""
 					if challenging_member_list[str(i)][qid]['tree']:
-						Result[str(i)].append((qid, challenging_member_list[str(i)][qid]['msg']))
+						result[str(i)].append((qid, challenging_member_list[str(i)][qid]['msg']))
 			except KeyError:
 				continue
-	# print(Result)
 	else:
 		boss_id = str(boss_id)
 		for qid in challenging_member_list[boss_id]:
-			# reply += f""
 			if challenging_member_list[boss_id][qid]['tree']:
-				Result[boss_id].append((qid, challenging_member_list[boss_id][qid]['msg']))
-	return Result
+				result[boss_id].append((qid, challenging_member_list[boss_id][qid]['msg']))
+	return result
 
 
 #下树

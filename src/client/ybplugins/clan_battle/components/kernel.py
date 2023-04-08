@@ -9,10 +9,11 @@ from aiocqhttp.api import Api
 from apscheduler.triggers.cron import CronTrigger
 
 from ...ybdata import Clan_group, Clan_member, User
-from ..exception import ClanBattleError, InputError
+from ..exception import ClanBattleError, InputError, GroupNotExist
 from ..util import atqq
 from .define import Commands, Server
 from .image_engine import download_missing_user_profile
+from .multi_cq_utils import refresh
 
 _logger = logging.getLogger(__name__)
 
@@ -113,6 +114,7 @@ def execute(self, match_num, ctx):
 		config.set('GROUPS', str(ctx['group_id']), str(ctx['self_id']))
 		with open(str(inipath),'w') as f:
 			config.write(f)
+		refresh()
 		return ('公会创建成功，请登录后台查看，公会战成员请发送“加入公会”，'
 				'或管理员发送“加入全部成员”'
 				'如果无法正常使用网页催刀功能，请发送“手动添加群记录”')
@@ -414,20 +416,28 @@ def execute(self, match_num, ctx):
 		if len(cmd) != 2:
 			return
 		reply = ""
+		flag = True
 		if match_num == 30:
 			_dic = self.query_tree(group_id=group_id, user_id=user_id)
 			for key in _dic:
 				if _dic[key] != []:
-					reply += f"挂在{key}的成员有：\n"
+					flag = False
+					reply += f"{key}王挂树的成员：\n"
 					for item in _dic[key]:
 						reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}"
+			if flag:
+				reply = "当前在任意Boss上无人挂树"
 		else:
 			_boss_num = match_num - 30
+			group:Clan_group = self.get_clan_group(group_id)
+			if group is None:raise GroupNotExist
+			reply += '\n'.join(self.challenger_info_small(group, str(_boss_num)))
 			try:
 				_dic = self.query_tree(group_id=group_id, user_id=user_id, boss_id=_boss_num)
 			except KeyError:
-				return f"没有挂在{_boss_num}王的成员"
-			reply += f"挂在{_boss_num}的成员有：\n"
+				reply += f"\n没有成员在{_boss_num}王挂树"
+				return reply
+			reply += f"\n{_boss_num}王挂树的成员：\n"
 			for item in _dic[str(_boss_num)]:
 				reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}"
 		return reply
