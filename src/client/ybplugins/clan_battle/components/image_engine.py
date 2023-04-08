@@ -191,7 +191,7 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
             this_height += 29
             this_width = 29
             background.alpha_composite(this_chip, (this_width, this_height))
-            this_width += this_chip.width
+            this_width += this_chip.width + 5
 
     result_image = background.generate(color=background_color, padding=(10, 10, 10, 10), override_size=(CHIPS_LIST_WIDTH, max(background.height, 64)))  # 限制最小大小
     result_image.alpha_composite(text_image, (5, center(result_image, text_image)[1]))  # 需要在 BackGroundGenerator 生成之后，否则可能会被 override_size 强制指定大小后获得错误坐标
