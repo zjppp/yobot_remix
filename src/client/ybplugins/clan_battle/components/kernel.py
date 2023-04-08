@@ -410,6 +410,24 @@ def execute(self, match_num, ctx):
 			return str(e)
 
 
-
-
-
+	elif 30 <= match_num <= 35:
+		if len(cmd) != 2:
+			return
+		reply = ""
+		if match_num == 30:
+			_dic = self.query_tree(group_id=group_id, user_id=user_id)
+			for key in _dic:
+				if _dic[key] != []:
+					reply += f"挂在{key}的成员有：\n"
+					for item in _dic[key]:
+						reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}"
+		else:
+			_boss_num = match_num - 30
+			try:
+				_dic = self.query_tree(group_id=group_id, user_id=user_id, boss_id=_boss_num)
+			except KeyError:
+				return f"没有挂在{_boss_num}王的成员"
+			reply += f"挂在{_boss_num}的成员有：\n"
+			for item in _dic[str(_boss_num)]:
+				reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}"
+		return reply
