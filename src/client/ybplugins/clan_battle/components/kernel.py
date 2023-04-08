@@ -12,7 +12,7 @@ from ...ybdata import Clan_group, Clan_member, User
 from ..exception import ClanBattleError, InputError, GroupNotExist
 from ..util import atqq
 from .define import Commands, Server
-from .image_engine import download_missing_user_profile
+from .image_engine import download_missing_user_profile, image_engine_init
 from .multi_cq_utils import refresh
 
 _logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ def init(self,
 	# log
 	if not os.path.exists(os.path.join(glo_setting['dirname'], 'log')):
 		os.mkdir(os.path.join(glo_setting['dirname'], 'log'))
+	image_engine_init()
 
 	formater = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s')
 	filehandler = logging.FileHandler(
