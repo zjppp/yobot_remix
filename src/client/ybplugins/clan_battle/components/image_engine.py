@@ -159,41 +159,79 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
 
 def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
     global glovar_missing_user_id
-    CHIPS_LIST_WIDTH = 320
+    OVERALL_CHIPS_LIST_WITH = 320
+    CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
     background = BackGroundGenerator()
+    chips_background = BackGroundGenerator()
     is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
     text_image = get_font_image("\n".join([i for i in text]), 24, (255, 255, 255) if is_white_text else (0, 0, 0))
     if not chips_array:
-        background = Image.new("RGBA", (CHIPS_LIST_WIDTH, 64), background_color)
+        background = Image.new("RGBA", (OVERALL_CHIPS_LIST_WITH, 64), background_color)
         background.alpha_composite(text_image, (5, center(background, text_image)[1]))
         text_image = get_font_image(f"暂无{text}", 28, (255, 255, 255) if is_white_text else (0, 0, 0))
         background.alpha_composite(text_image, center(background, text_image))
         return round_corner(background, 5)
 
     chips_image_list = []
-    for i, j in chips_array.items():
-        user_profile_path = USER_HEADERS_PATH.joinpath(i + ".jpg")
+    for this_wide_chips_address, this_short_chips_address in chips_array.items():
+        user_profile_path = USER_HEADERS_PATH.joinpath(this_wide_chips_address + ".jpg")
         if not user_profile_path.is_file():
             user_profile_image = Image.new("RGBA", (20, 20), (255, 255, 255, 0))
-            glovar_missing_user_id.add(int(i))
+            glovar_missing_user_id.add(int(this_wide_chips_address))
         else:
-            user_profile_image = Image.open(USER_HEADERS_PATH.joinpath(i + ".jpg"), "r")
-        chips_image_list.append(user_chips(user_profile_image, j))
+            user_profile_image = Image.open(USER_HEADERS_PATH.joinpath(this_wide_chips_address + ".jpg"), "r")
+        chips_image_list.append(user_chips(user_profile_image, this_short_chips_address))
     chips_image_list.sort(key=lambda i: i.width)
 
-    this_width = 29
-    this_height = 0
-    for this_chip in chips_image_list:
-        if this_width + this_chip.width <= CHIPS_LIST_WIDTH:
-            background.alpha_composite(this_chip, (this_width, this_height))
-            this_width += this_chip.width + 5
-        else:
-            this_height += 29
-            this_width = 29
-            background.alpha_composite(this_chip, (this_width, this_height))
-            this_width += this_chip.width + 5
+    """
+    用户 chips 排版算法
+    从长到短  以从长到短chip为基础不断与短到长的chip匹配并添加  直至行宽超过最大值后换行
+    复杂度比较高  可能后期这里需要性能优化
+    """
 
-    result_image = background.generate(color=background_color, padding=(10, 10, 10, 10), override_size=(CHIPS_LIST_WIDTH, max(background.height, 64)))  # 限制最小大小
+    chips_image_line_list: List[List[Image.Image]] = []
+    chips_image_list.reverse()
+    while chips_image_list:
+        this_wide_chip_image = chips_image_list[0]  # 从长(前)到短(后)
+        chips_image_list.pop(0)
+        chips_image_line_list.append([])
+        chips_image_line_list[-1].append(this_wide_chip_image)
+        current_width = this_wide_chip_image.width + 5
+        if not chips_image_list:  # 没有待处理的chip了
+            break
+        if current_width + chips_image_list[-1].width > CHIPS_LIST_WIDTH:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，需要独占一行
+            continue
+        while (current_width < CHIPS_LIST_WIDTH) and chips_image_list:  # 在待处理队列不为空且已使用的行宽不超过最大行宽前  不断从长到短添加chip
+            last_loop_result = len(chips_image_list) - 1  # 记录超出行宽前  在这一行添加的最宽chip索引
+            for this_short_chips_address in range(len(chips_image_list) - 1, -1, -1):  # 从短(索引最大)到长(索引最小)
+                if (current_width + chips_image_list[this_short_chips_address].width < CHIPS_LIST_WIDTH) and (this_short_chips_address != 0):  # 等于0时已经是待处理队列中最长的chip了(此时队列不包含刚刚添加的长chip)
+                    # 因为是从短到长  先找出这一行里面第二个能放下最长的chip
+                    last_loop_result = this_short_chips_address
+                    continue
+                # 在这一行添加这个chip  与上面添加长chip的操作一样
+                this_sort_chip_image = chips_image_list[last_loop_result]
+                chips_image_list.pop(last_loop_result)
+                chips_image_line_list[-1].append(this_sort_chip_image)
+                current_width += this_sort_chip_image.width + 5  # 记录这个chip宽及间距
+                break  # 此时已经是这一行能放置的第二长chip了 没必要再向左找更长的chip了 要找的chip只可能在右边
+            if not chips_image_list:  # 没有待处理的chip了
+                break
+            if current_width + chips_image_list[-1].width > CHIPS_LIST_WIDTH:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，这一行已经完全没法防止新chip了
+                break
+    # chips_image_line_list.reverse()
+
+    this_height = 0
+    this_width = 0
+    for this_chips_line in chips_image_line_list:
+        for this_chip_image in this_chips_line:
+            chips_background.alpha_composite(this_chip_image, (this_width, this_height))
+            this_width += this_chip_image.width + 5
+        this_height += 29
+        this_width = 0
+
+    background.alpha_composite(chips_background.generate(color=background_color), (29, 0))
+
+    result_image = background.generate(color=background_color, padding=(10, 10, 10, 10), override_size=(OVERALL_CHIPS_LIST_WITH, max(background.height, 64)))  # 限制最小大小
     result_image.alpha_composite(text_image, (5, center(result_image, text_image)[1]))  # 需要在 BackGroundGenerator 生成之后，否则可能会被 override_size 强制指定大小后获得错误坐标
     return round_corner(result_image, 5)
 
