@@ -12,6 +12,7 @@ from ...ybdata import Clan_group, Clan_member, User
 from ..exception import ClanBattleError, InputError
 from ..util import atqq
 from .define import Commands, Server
+from .image_engine import download_missing_user_profile
 
 _logger = logging.getLogger(__name__)
 
@@ -140,8 +141,11 @@ def execute(self, match_num, ctx):
 
 	elif match_num == 3:  # 状态
 		if cmd != '状态': return
-		try: boss_summary = self.boss_status_summary(group_id)
-		except ClanBattleError as e: return str(e)
+		try: 
+			boss_summary = self.boss_status_summary(group_id)
+			asyncio.ensure_future(download_missing_user_profile())
+		except ClanBattleError as e:
+			return str(e)
 		return boss_summary
 
 
@@ -384,12 +388,27 @@ def execute(self, match_num, ctx):
 			available_empty_battle_id = self._get_available_empty_battle_id(group_id)
 			group = Clan_group.get_or_none(group_id=group_id)
 			current_data_slot_record = group.battle_id
+			if current_data_slot_record == available_empty_battle_id:
+				return "当前档案记录为空，无需重置"
 			self.switch_data_slot(group_id, available_empty_battle_id)
 		except ClanBattleError as e:
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
-		return "进度已重置\n当前档案编号已从 {} 切换为 {}".format(current_data_slot_record, available_empty_battle_id)
+		return "进度已重置\n档案编号： {} -> {}".format(current_data_slot_record, available_empty_battle_id)
+
+	elif match_num == 21:  #刷新
+		try:
+			if cmd == "刷新头像":
+				# TODO: 权限校验及频率限制
+				# _logger.info(f"群 {group_id} 更新成员头像")
+				# self._update_user_profile_image(group_id=group_id)
+				# return "已刷新本公会所有成员头像"
+				return
+		except ClanBattleError as e:
+			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+			return str(e)
+
 
 	elif 30 <= match_num <= 35:
 		if len(cmd) != 2:
