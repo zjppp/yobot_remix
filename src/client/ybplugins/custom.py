@@ -24,6 +24,7 @@ from quart import Quart
 from pathlib import Path
 import os
 import configparser
+from .clan_battle.components.multi_cq_utils import refresh
 
 
 class Custom:
@@ -85,6 +86,7 @@ class Custom:
             config.set('GROUPS', str(ctx['group_id']), str(ctx['self_id']))
             with open(str(self.inipath),'w') as f:
                 config.write(f)
+            refresh()
             return '群记录添加成功！'
 
         return

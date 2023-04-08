@@ -82,4 +82,5 @@ class ClanBattle:
 	get_battle_member_list = get_battle_member_list				##从会战记录里获取成员列表
 	get_member_list = get_member_list							##获取所有成员列表
 	
-	query_tree = query_tree
+	query_tree = query_tree                                     ##查树
+	get_clan_group = get_clan_group
