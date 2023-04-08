@@ -1213,7 +1213,7 @@ def challenger_info_small(self, group:Clan_group, boss_num, msg:List = None):
 	if challenging_list:
 		msg.append('--------------------')
 		for challenger, info in challenging_list.items():
-			temp_msg = f'— {self._get_nickname_by_qqid(int(challenger))}'
+			temp_msg = f'->{self._get_nickname_by_qqid(int(challenger))}'
 			if info['is_continue']:
 				temp_msg += '(补偿)'
 			if info['behalf']:
