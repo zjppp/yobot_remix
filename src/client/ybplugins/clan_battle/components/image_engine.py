@@ -158,7 +158,7 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
 
 def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
     global glovar_missing_user_id
-    OVERALL_CHIPS_LIST_WITH = 414
+    OVERALL_CHIPS_LIST_WITH = 414 - 20
     CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
     CHIPS_INTERVAL = 5
     background = BackGroundGenerator()
@@ -166,7 +166,7 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
     is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
     text_image = get_font_image("\n".join([i for i in text]), 24, (255, 255, 255) if is_white_text else (0, 0, 0))
     if not chips_array:
-        background = Image.new("RGBA", (OVERALL_CHIPS_LIST_WITH, 64), background_color)
+        background = Image.new("RGBA", (OVERALL_CHIPS_LIST_WITH + 20, 70), background_color)
         background.alpha_composite(text_image, (5, center(background, text_image)[1]))
         text_image = get_font_image(f"暂无{text}", 28, (255, 255, 255) if is_white_text else (0, 0, 0))
         background.alpha_composite(text_image, center(background, text_image))
@@ -239,14 +239,18 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
 
 
 def get_process_image(finish_challenge_count: int, half_challenge_list: Dict[str, str]):
-    overall_image = Image.new("RGBA", (498, 500), (255, 255, 255, 0))
+    overall_image = BackGroundGenerator()
+
+    full_challenge_background = BackGroundGenerator()
     full_challenge_text = get_font_image(f"完整刀", 24)
     full_challenge_count_text = get_font_image(str(finish_challenge_count), 24, (255, 0, 0))
-    overall_image.alpha_composite(full_challenge_text, (round((148 - full_challenge_text.width) / 2), 15))
-    overall_image.alpha_composite(full_challenge_count_text, (round((148 - full_challenge_count_text.width) / 2), 49))
+    full_challenge_background.alpha_composite(full_challenge_text, (0, 0))
+    full_challenge_background.alpha_composite(full_challenge_count_text, (full_challenge_background.center(full_challenge_count_text)[0], 34))
+
     chips_list_image = chips_list(half_challenge_list, "补偿", (237, 231, 246))
-    overall_image.alpha_composite(chips_list_image, (148, 10))
-    return overall_image.crop((0, 0, 498, chips_list_image.height + 20))
+    overall_image.alpha_composite(chips_list_image, (0, 78))
+    overall_image.alpha_composite(round_corner(full_challenge_background.generate(color=(255, 205, 210), padding=(10, 10, 10, 10)), 5), (0, 0))
+    return overall_image.generate(padding=(10, 20, 10, 20))
 
 
 class BossStatusImageCore:
@@ -333,7 +337,7 @@ class BossStatusImageCore:
             background.alpha_composite(chips_list_image, (0, current_chips_height))
             current_chips_height += chips_list_image.height + 10
 
-        return background.generate()
+        return background.generate(color=background_color, padding=(10, 20, 10, 20))
 
 
 def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None, after: Optional[Image.Image] = None) -> Image.Image:
@@ -354,7 +358,6 @@ def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], bef
 
     if after:
         background.paste(after, (0, current_y_cursor))
-
 
     return background.generate()
 
