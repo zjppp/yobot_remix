@@ -208,6 +208,8 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
                     # 因为是从短到长  先找出这一行里面第二个能放下最长的chip
                     last_loop_result = this_short_chips_address
                     continue
+                if this_short_chips_address == 0 and (current_width + chips_image_list[this_short_chips_address].width < CHIPS_LIST_WIDTH):
+                    last_loop_result = 0
                 # 在这一行添加这个chip  与上面添加长chip的操作一样
                 this_sort_chip_image = chips_image_list[last_loop_result]
                 chips_image_list.pop(last_loop_result)
