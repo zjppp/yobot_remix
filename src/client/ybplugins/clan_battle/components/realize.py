@@ -1295,7 +1295,6 @@ def challenger_info(self, group_id):
 				extra_info["预约"][str(user_id)] = self._get_nickname_by_qqid(user_id)[:4] + (f":{note}" if note else "")
 
 		image_core_instance_list.append(BossStatusImageCore(
-			self._level_by_cycle(this_boss_data['cycle'], group.game_server) + 1, 
 			this_boss_data['cycle'], 
 			this_boss_data["health"],
 			this_boss_data["full_health"],
@@ -1303,7 +1302,7 @@ def challenger_info(self, group_id):
 			this_boss_data["icon_id"],
 			extra_info
 		))
-	process_image = get_process_image(finish_challenge_count, half_challenge_list)
+	process_image = get_process_image(finish_challenge_count, "ABCDEFG"[self._level_by_cycle(group.boss_cycle, group.game_server)], half_challenge_list)
 	result_image = generate_combind_boss_state_image(image_core_instance_list, process_image)
 	if result_image.mode != "RGB":
 		result_image = result_image.convert("RGB")

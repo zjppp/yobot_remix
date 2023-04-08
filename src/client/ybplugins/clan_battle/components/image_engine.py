@@ -19,9 +19,11 @@ CHIPS_COLOR_DICT = {"预约": (179, 229, 252), "挑战": (220, 237, 200), "挂�
 
 glovar_missing_user_id: Set[int] = set()
 
+
 def image_engine_init():
     if not USER_HEADERS_PATH.is_dir():
         USER_HEADERS_PATH.mkdir()
+
 
 class BackGroundGenerator:
     """
@@ -240,7 +242,7 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
     return round_corner(result_image, 5)
 
 
-def get_process_image(finish_challenge_count: int, half_challenge_list: Dict[str, str]):
+def get_process_image(finish_challenge_count: int, cycle: str, half_challenge_list: Dict[str, str]):
     overall_image = BackGroundGenerator()
 
     full_challenge_background = BackGroundGenerator()
@@ -249,16 +251,22 @@ def get_process_image(finish_challenge_count: int, half_challenge_list: Dict[str
     full_challenge_background.alpha_composite(full_challenge_text, (0, 0))
     full_challenge_background.alpha_composite(full_challenge_count_text, (full_challenge_background.center(full_challenge_count_text)[0], 34))
 
+    cycle_background = BackGroundGenerator()
+    cycle_text = get_font_image(f"阶段", 24, (255, 255, 255))
+    cycle_count_text = get_font_image(str(cycle), 24, (255, 255, 255))
+    cycle_background.alpha_composite(cycle_text, (0, 0))
+    cycle_background.alpha_composite(cycle_count_text, (cycle_background.center(cycle_count_text)[0], 34))
+
     chips_list_image = chips_list(half_challenge_list, "补偿", (237, 231, 246))
     overall_image.alpha_composite(chips_list_image, (0, 78))
     overall_image.alpha_composite(round_corner(full_challenge_background.generate(color=(255, 205, 210), padding=(10, 10, 10, 10)), 5), (0, 0))
+    overall_image.alpha_composite(round_corner(cycle_background.generate(color=(3, 169, 244), padding=(10, 10, 10, 10)), 5), (full_challenge_background.width + 30, 0))
     return overall_image.generate(padding=(10, 20, 10, 20))
 
 
 class BossStatusImageCore:
     def __init__(
         self,
-        cyle: int,
         boss_round: int,
         current_hp: int,
         max_hp: int,
@@ -268,7 +276,6 @@ class BossStatusImageCore:
     ) -> None:
         self.current_hp = current_hp
         self.max_hp = max_hp
-        self.cyle = cyle
         self.round = boss_round
         self.name = name
         self.boss_icon_id = boss_icon_id
@@ -305,7 +312,7 @@ class BossStatusImageCore:
         return round_corner(background)
 
     def cyle_round_image(self) -> Image.Image:
-        text_str = f"{self.cyle} 阶段， {self.round} 周目"
+        text_str = f"{self.round} 周目"
         text_image = get_font_image(text_str, 20, (255, 255, 255))
         background = Image.new("RGBA", (text_image.width + 24, 24), (3, 169, 244, 255))
         background.alpha_composite(text_image, center(background, text_image))
