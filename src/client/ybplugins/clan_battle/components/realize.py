@@ -863,7 +863,7 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None):
 
 
 def query_tree(self, group_id: Groupid, user_id: QQid, boss_id=0) -> dict:
-	qid = str(QQid)
+	qid = str(user_id)
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None: raise GroupNotExist
 	user = User.get_or_none(qqid=user_id)
