@@ -41,7 +41,7 @@ class BackGroundGenerator:
         self.__used_width = max(dest[0] + im.width, self.__used_width)
         self.__used_height = max(dest[1] + im.height, self.__used_height)
 
-    def paste(self, im: Image.Image, box: Tuple[int, int], mask: Image.Image, *args, **kw) -> None:
+    def paste(self, im: Image.Image, box: Tuple[int, int], mask: Optional[Image.Image] = None, *args, **kw) -> None:
         self.__paste_array.append((im, box, mask, args, kw))
         self.__used_width = max(box[0] + im.width, self.__used_width)
         self.__used_height = max(box[1] + im.height, self.__used_height)
@@ -85,7 +85,7 @@ class BackGroundGenerator:
 
 
 def get_font_image(text: str, size: int, color: Tuple[int, int, int] = (0, 0, 0)) -> Image.Image:
-    background = Image.new("RGBA", (len(text) * size, 100), (255, 255, 255, 0))
+    background = Image.new("RGBA", (len(text) * size, 128), (255, 255, 255, 0))
     background_draw = ImageDraw.Draw(background)
     image_font = ImageFont.truetype(FONTS, size)
     background_draw.text((0, 0), text=text, font=image_font, fill=color)
@@ -143,24 +143,24 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
     head_icon = head_icon.resize((20, 20))
     head_icon = round_corner(head_icon)
 
-    # background_color = tuple(random.randint(10, 240) for i in range(3))
-    # background_color = (228, 228, 228)
     background_color = (189, 189, 189)
     is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
 
     user_name_image = get_font_image(user_name, 20, (255, 255, 255) if is_white_text else (0, 0, 0))
 
-    background = Image.new("RGBA", (15 + head_icon.width + user_name_image.width, 24), background_color)
-    background.alpha_composite(head_icon, (5, 2))
-    background.alpha_composite(user_name_image, (30, center(background, user_name_image)[1]))
+    background = BackGroundGenerator()
+    background.alpha_composite(head_icon, (0, 0))
+    if user_name_image.getbbox() is not None:
+        background.alpha_composite(user_name_image, (25, background.center(user_name_image)[1]))
 
-    return round_corner(background)
+    return round_corner(background.generate(color=background_color, padding=(5, 5, 5, 5)))
 
 
 def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
     global glovar_missing_user_id
     OVERALL_CHIPS_LIST_WITH = 320
     CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
+    CHIPS_INTERVAL = 5
     background = BackGroundGenerator()
     chips_background = BackGroundGenerator()
     is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
@@ -196,7 +196,7 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
         chips_image_list.pop(0)
         chips_image_line_list.append([])
         chips_image_line_list[-1].append(this_wide_chip_image)
-        current_width = this_wide_chip_image.width + 5
+        current_width = this_wide_chip_image.width + CHIPS_INTERVAL
         if not chips_image_list:  # 没有待处理的chip了
             break
         if current_width + chips_image_list[-1].width > CHIPS_LIST_WIDTH:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，需要独占一行
@@ -212,21 +212,23 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
                 this_sort_chip_image = chips_image_list[last_loop_result]
                 chips_image_list.pop(last_loop_result)
                 chips_image_line_list[-1].append(this_sort_chip_image)
-                current_width += this_sort_chip_image.width + 5  # 记录这个chip宽及间距
+                current_width += this_sort_chip_image.width + CHIPS_INTERVAL  # 记录这个chip宽及间距
                 break  # 此时已经是这一行能放置的第二长chip了 没必要再向左找更长的chip了 要找的chip只可能在右边
             if not chips_image_list:  # 没有待处理的chip了
                 break
-            if current_width + chips_image_list[-1].width > CHIPS_LIST_WIDTH:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，这一行已经完全没法防止新chip了
+            if current_width + chips_image_list[-1].width > CHIPS_LIST_WIDTH:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，这一行已经完全没法放置新chip了
                 break
     # chips_image_line_list.reverse()
 
     this_height = 0
     this_width = 0
     for this_chips_line in chips_image_line_list:
+        if not this_chips_line:
+            continue
         for this_chip_image in this_chips_line:
             chips_background.alpha_composite(this_chip_image, (this_width, this_height))
-            this_width += this_chip_image.width + 5
-        this_height += 29
+            this_width += this_chip_image.width + CHIPS_INTERVAL
+        this_height += this_chip_image.height + CHIPS_INTERVAL
         this_width = 0
 
     background.alpha_composite(chips_background.generate(color=background_color), (29, 0))
@@ -335,7 +337,7 @@ class BossStatusImageCore:
 
 
 def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None, after: Optional[Image.Image] = None) -> Image.Image:
-    background = Image.new("RGBA", (498, 3000), (255, 255, 255))
+    background = BackGroundGenerator()
     current_y_cursor = 0
     format_color_flag = False
 
@@ -354,7 +356,7 @@ def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], bef
         background.paste(after, (0, current_y_cursor))
         current_y_cursor += after.height
 
-    return background.crop((0, 0, background.width, current_y_cursor))
+    return background.generate().crop((0, 0, background.width, current_y_cursor))
 
 
 async def download_pic(url: str, proxies: Optional[str] = None, file_name="") -> Optional[Path]:
