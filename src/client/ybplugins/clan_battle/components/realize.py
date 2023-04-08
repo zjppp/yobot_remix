@@ -861,6 +861,37 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None):
 	self._boss_status[group_id] = asyncio.get_event_loop().create_future()
 	return '挂树惹~ (っ °Д °;)っ'
 
+
+def query_tree(self, group_id: Groupid, user_id: QQid, boss_id=0) -> dict:
+	qid = str(user_id)
+	group:Clan_group = get_clan_group(self, group_id)
+	if group is None: raise GroupNotExist
+	user = User.get_or_none(qqid=user_id)
+	if user is None: raise GroupError('请先加入公会')
+	challenging_member_list = safe_load_json(group.challenging_member_list, {})
+	# reply = ""
+	# print(challenging_member_list)
+	Result = {"1": [], "2": [], "3": [], "4": [], "5": []}
+	if boss_id == 0:
+		for i in range(1,6):
+			# reply += f"挂树在{i}王的成员：\n"
+			try:
+				for qid in challenging_member_list[str(i)]:
+					# reply += f""
+					if challenging_member_list[str(i)][qid]['tree']:
+						Result[str(i)].append((qid, challenging_member_list[str(i)][qid]['msg']))
+			except KeyError:
+				continue
+	# print(Result)
+	else:
+		boss_id = str(boss_id)
+		for qid in challenging_member_list[boss_id]:
+			# reply += f""
+			if challenging_member_list[boss_id][qid]['tree']:
+				Result[boss_id].append((qid, challenging_member_list[boss_id][qid]['msg']))
+	return Result
+
+
 #下树
 def take_it_of_the_tree(self, group_id: Groupid, qqid: QQid, boss_num=0, take_it_type = 0, send_web = True):
 	"""

@@ -9,7 +9,8 @@ from .components.realize import *
 from .components.realize import (_level_by_cycle, _get_nickname_by_qqid,
 				_get_group_previous_challenge, _update_group_list_async, 
 				_fetch_member_list_async, _update_all_group_members_async,
-				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id)
+				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id,
+				query_tree)
 
 
 class ClanBattle:
@@ -80,4 +81,4 @@ class ClanBattle:
 	get_battle_member_list = get_battle_member_list				##从会战记录里获取成员列表
 	get_member_list = get_member_list							##获取所有成员列表
 	
-
+	query_tree = query_tree
