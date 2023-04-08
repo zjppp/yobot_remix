@@ -46,18 +46,25 @@ class BackGroundGenerator:
         self.__used_width = max(box[0] + im.width, self.__used_width)
         self.__used_height = max(box[1] + im.height, self.__used_height)
 
-    def center(self, image: Image.Image, dest: Tuple[int, int]) -> Tuple[int, int]:
+    def center(self, image: Image.Image) -> Tuple[int, int]:
         return round((self.__used_width - image.width) / 2), round((self.__used_height - image.height) / 2)
 
-    def generate(self, color: Tuple[int, int, int, int] = (255, 255, 255, 255), padding: Tuple[int, int, int, int] = (0, 0, 0, 0)) -> Image.Image:
+    def generate(self, color: Tuple[int, int, int] = (255, 255, 255), padding: Tuple[int, int, int, int] = (0, 0, 0, 0), override_size: Optional[Tuple[Optional[int], Optional[int]]] = None) -> Image.Image:
         """
         生成最终图像
 
         :param color: 画布背景颜色
         :param padding: 画布外部拓展边距 (左 上 右 下)
+        :override_size: 强制生成该大小的画布 (长 宽) 不包括外部拓展边距 可设置None跳过
         :return: 最终生成的图像
         """
-        result_image = Image.new("RGBA", (self.__used_width + padding[0] + padding[2], self.__used_height + padding[1] + padding[3]), color)
+        generate_size = self.__used_width + padding[0] + padding[2], self.__used_height + padding[1] + padding[3]
+        if override_size:
+            if override_size[0] is not None:
+                generate_size = override_size[0] + padding[0] + padding[2], generate_size[1]
+            if override_size[1] is not None:
+                generate_size = generate_size[0], override_size[1] + padding[1] + padding[3]
+        result_image = Image.new("RGBA", generate_size, color)
         for i in self.__alpha_composite_array:
             result_image.alpha_composite(i[0], (i[1][0] + padding[0], i[1][1] + padding[1]), *i[2], **i[3])
         for i in self.__paste_array:
@@ -67,6 +74,14 @@ class BackGroundGenerator:
     @property
     def size(self) -> Tuple[int, int]:
         return self.__used_width, self.__used_height
+
+    @property
+    def height(self) -> int:
+        return self.__used_height
+
+    @property
+    def width(self) -> int:
+        return self.__used_width
 
 
 def get_font_image(text: str, size: int, color: Tuple[int, int, int] = (0, 0, 0)) -> Image.Image:
@@ -144,12 +159,12 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
 
 def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
     global glovar_missing_user_id
-    CHIPS_LIST_WIDTH = 340
-    background = Image.new("RGBA", (CHIPS_LIST_WIDTH, 350), background_color)
+    CHIPS_LIST_WIDTH = 320
+    background = BackGroundGenerator()
     is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
     text_image = get_font_image("\n".join([i for i in text]), 24, (255, 255, 255) if is_white_text else (0, 0, 0))
     if not chips_array:
-        background = background.crop((0, 0, CHIPS_LIST_WIDTH, 64))
+        background = Image.new("RGBA", (CHIPS_LIST_WIDTH, 64), background_color)
         background.alpha_composite(text_image, (5, center(background, text_image)[1]))
         text_image = get_font_image(f"暂无{text}", 28, (255, 255, 255) if is_white_text else (0, 0, 0))
         background.alpha_composite(text_image, center(background, text_image))
@@ -165,23 +180,22 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
             user_profile_image = Image.open(USER_HEADERS_PATH.joinpath(i + ".jpg"), "r")
         chips_image_list.append(user_chips(user_profile_image, j))
     chips_image_list.sort(key=lambda i: i.width)
-    this_width = 34
-    this_height = 5
+
+    this_width = 29
+    this_height = 0
     for this_chip in chips_image_list:
         if this_width + this_chip.width <= CHIPS_LIST_WIDTH:
             background.alpha_composite(this_chip, (this_width, this_height))
             this_width += this_chip.width + 5
         else:
             this_height += 29
-            this_width = 34
+            this_width = 29
             background.alpha_composite(this_chip, (this_width, this_height))
             this_width += this_chip.width
-    if this_height + 34 <= 64:
-        background = background.crop((0, 0, CHIPS_LIST_WIDTH, 64))
-    else:
-        background = background.crop((0, 0, CHIPS_LIST_WIDTH, this_height + 34))
-    background.alpha_composite(text_image, (5, center(background, text_image)[1]))
-    return round_corner(background, 5)
+
+    result_image = background.generate(color=background_color, padding=(10, 10, 10, 10), override_size=(CHIPS_LIST_WIDTH, max(background.height, 64)))  # 限制最小大小
+    result_image.alpha_composite(text_image, (5, center(result_image, text_image)[1]))  # 需要在 BackGroundGenerator 生成之后，否则可能会被 override_size 强制指定大小后获得错误坐标
+    return round_corner(result_image, 5)
 
 
 def get_process_image(finish_challenge_count: int, half_challenge_list: Dict[str, str]):
