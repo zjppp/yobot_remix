@@ -2,7 +2,6 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 from typing import Tuple, List, Optional, Dict, Set
 from pathlib import Path
-import random
 import httpx
 import asyncio
 import logging
@@ -14,14 +13,15 @@ FONTS_PATH = os.path.join(FILE_PATH, "fonts")
 FONTS = os.path.join(FONTS_PATH, "msyh.ttf")
 USER_HEADERS_PATH = Path(__file__).parent.joinpath("../../../yobot_data/user_profile")
 BOSS_ICON_PATH = Path(__file__).parent.joinpath("../../../public/libs/yocool@final/princessadventure/boss_icon")
-if not USER_HEADERS_PATH.is_dir():
-    USER_HEADERS_PATH.mkdir()
 
 # CHIPS_COLOR_LIST = [(229, 115, 115), (186, 104, 200), (149, 177, 205), (100, 181, 246), (77, 182, 172), (220, 231, 177)]
 CHIPS_COLOR_DICT = {"预约": (179, 229, 252), "挑战": (220, 237, 200), "挂树": (255, 205, 210)}
 
 glovar_missing_user_id: Set[int] = set()
 
+def image_engine_init():
+    if not USER_HEADERS_PATH.is_dir():
+        USER_HEADERS_PATH.mkdir()
 
 class BackGroundGenerator:
     """
