@@ -9,7 +9,7 @@ from .components.realize import *
 from .components.realize import (_level_by_cycle, _get_nickname_by_qqid,
 				_get_group_previous_challenge, _update_group_list_async, 
 				_fetch_member_list_async, _update_all_group_members_async,
-				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id)
+				_update_user_nickname_async, _boss_data_dict, _get_available_empty_battle_id, _update_user_profile_image)
 
 
 class ClanBattle:
@@ -45,6 +45,7 @@ class ClanBattle:
 	_update_user_nickname_async = _update_user_nickname_async			##更新成员名字
 	_boss_data_dict = _boss_data_dict									##获取boss当前数据
 	_get_available_empty_battle_id = _get_available_empty_battle_id		##获取公会最靠前的空白档案号
+	_update_user_profile_image = _update_user_profile_image             ##刷新用户头像
 
 	create_group = create_group								##创建公会
 	bind_group = bind_group									##加入公会
