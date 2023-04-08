@@ -158,7 +158,7 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
 
 def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
     global glovar_missing_user_id
-    OVERALL_CHIPS_LIST_WITH = 320
+    OVERALL_CHIPS_LIST_WITH = 414
     CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
     CHIPS_INTERVAL = 5
     background = BackGroundGenerator()
@@ -269,7 +269,7 @@ class BossStatusImageCore:
         self.extra_chips_array = extra_chips_array
 
     def hp_percent_image(self) -> Image.Image:
-        HP_PERCENT_IMAGE_SIZE = (340, 24)
+        HP_PERCENT_IMAGE_SIZE = (340, 30)
         background = Image.new("RGBA", HP_PERCENT_IMAGE_SIZE, (200, 200, 200))
         background_draw = ImageDraw.Draw(background, "RGBA")
         percent_pixel_cursor_x = round(self.current_hp / self.max_hp * HP_PERCENT_IMAGE_SIZE[0])
@@ -306,31 +306,31 @@ class BossStatusImageCore:
         return round_corner(background)
 
     def generate(self, background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
-        BOSS_HEADER_SIZE = 128
+        BOSS_HEADER_SIZE = 64
 
         background = BackGroundGenerator()
 
         boss_name_image = get_font_image(self.name, 24)
-        background.alpha_composite(boss_name_image, (BOSS_HEADER_SIZE + 20, 10))
-        background.alpha_composite(self.cyle_round_image(), (BOSS_HEADER_SIZE + 30 + boss_name_image.width, 10))
-        background.alpha_composite(self.hp_percent_image(), (BOSS_HEADER_SIZE + 20, 44))
+        background.alpha_composite(boss_name_image, (BOSS_HEADER_SIZE + 10, 0))
+        background.alpha_composite(self.cyle_round_image(), (BOSS_HEADER_SIZE + 20 + boss_name_image.width, 0))
+        background.alpha_composite(self.hp_percent_image(), (BOSS_HEADER_SIZE + 10, 34))
 
         if not BOSS_ICON_PATH.joinpath(self.boss_icon_id + ".webp").is_file():
             boss_icon = Image.new("RGBA", (128, 128), (255, 255, 255, 0))
         else:
             boss_icon = Image.open(BOSS_ICON_PATH.joinpath(self.boss_icon_id + ".webp"), "r")
 
-        boss_icon = boss_icon.resize((128, 128))
+        boss_icon = boss_icon.resize((BOSS_HEADER_SIZE, BOSS_HEADER_SIZE))
         boss_icon = round_corner(boss_icon, 10)
-        background.alpha_composite(boss_icon, (10, 10))
+        background.alpha_composite(boss_icon, (0, 0))
 
-        current_chips_height = 78
+        current_chips_height = 74
         for this_chips_list in self.extra_chips_array:
             chips_background_color = (240, 240, 240)
             if this_chips_list in CHIPS_COLOR_DICT:
                 chips_background_color = CHIPS_COLOR_DICT[this_chips_list]
             chips_list_image = chips_list(self.extra_chips_array[this_chips_list], this_chips_list, chips_background_color)
-            background.alpha_composite(chips_list_image, (BOSS_HEADER_SIZE + 20, current_chips_height))
+            background.alpha_composite(chips_list_image, (0, current_chips_height))
             current_chips_height += chips_list_image.height + 10
 
         return background.generate()
@@ -354,7 +354,7 @@ def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], bef
 
     if after:
         background.paste(after, (0, current_y_cursor))
-        
+
 
     return background.generate()
 
