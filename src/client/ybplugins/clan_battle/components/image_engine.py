@@ -343,7 +343,7 @@ def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], bef
 
     if before:
         background.paste(before, (0, 0))
-        current_y_cursor = before.height
+        current_y_cursor += before.height
         format_color_flag = True
 
     for this_image in boss_state:
@@ -354,9 +354,9 @@ def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], bef
 
     if after:
         background.paste(after, (0, current_y_cursor))
-        current_y_cursor += after.height
+        
 
-    return background.generate().crop((0, 0, background.width, current_y_cursor))
+    return background.generate()
 
 
 async def download_pic(url: str, proxies: Optional[str] = None, file_name="") -> Optional[Path]:
