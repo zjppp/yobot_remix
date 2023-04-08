@@ -424,7 +424,7 @@ def execute(self, match_num, ctx):
 					flag = False
 					reply += f"{key}王挂树的成员：\n"
 					for item in _dic[key]:
-						reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}"
+						reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}\n"
 			if flag:
 				reply = "当前在任意Boss上无人挂树"
 		else:
