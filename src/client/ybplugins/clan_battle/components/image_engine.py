@@ -308,7 +308,7 @@ class BossStatusImageCore:
     def generate(self, background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
         BOSS_HEADER_SIZE = 128
 
-        background = Image.new("RGBA", (498, 1000), background_color)
+        background = BackGroundGenerator()
 
         boss_name_image = get_font_image(self.name, 24)
         background.alpha_composite(boss_name_image, (BOSS_HEADER_SIZE + 20, 10))
@@ -333,7 +333,7 @@ class BossStatusImageCore:
             background.alpha_composite(chips_list_image, (BOSS_HEADER_SIZE + 20, current_chips_height))
             current_chips_height += chips_list_image.height + 10
 
-        return background.crop((0, 0, background.width, current_chips_height))
+        return background.generate()
 
 
 def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None, after: Optional[Image.Image] = None) -> Image.Image:
