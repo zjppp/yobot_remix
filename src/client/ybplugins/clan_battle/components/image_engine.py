@@ -23,6 +23,52 @@ CHIPS_COLOR_DICT = {"预约": (179, 229, 252), "挑战": (220, 237, 200), "挂�
 glovar_missing_user_id: Set[int] = set()
 
 
+class BackGroundGenerator:
+    """
+    被动背景生成器
+
+    不会立即创建Image对象及执行粘贴操作，以便动态生成画布大小
+    """
+
+    def __init__(self) -> None:
+        self.__alpha_composite_array: List[Tuple] = []
+        self.__paste_array: List[Tuple] = []
+        self.__used_height = 0
+        self.__used_width = 0
+
+    def alpha_composite(self, im: Image.Image, dest: Tuple[int, int], *args, **kw) -> None:
+        self.__alpha_composite_array.append((im, dest, args, kw))
+        self.__used_width = max(dest[0] + im.width, self.__used_width)
+        self.__used_height = max(dest[1] + im.height, self.__used_height)
+
+    def paste(self, im: Image.Image, box: Tuple[int, int], mask: Image.Image, *args, **kw) -> None:
+        self.__paste_array.append((im, box, mask, args, kw))
+        self.__used_width = max(box[0] + im.width, self.__used_width)
+        self.__used_height = max(box[1] + im.height, self.__used_height)
+
+    def center(self, image: Image.Image, dest: Tuple[int, int]) -> Tuple[int, int]:
+        return round((self.__used_width - image.width) / 2), round((self.__used_height - image.height) / 2)
+
+    def generate(self, color: Tuple[int, int, int, int] = (255, 255, 255, 255), padding: Tuple[int, int, int, int] = (0, 0, 0, 0)) -> Image.Image:
+        """
+        生成最终图像
+
+        :param color: 画布背景颜色
+        :param padding: 画布外部拓展边距 (左 上 右 下)
+        :return: 最终生成的图像
+        """
+        result_image = Image.new("RGBA", (self.__used_width + padding[0] + padding[2], self.__used_height + padding[1] + padding[3]), color)
+        for i in self.__alpha_composite_array:
+            result_image.alpha_composite(i[0], (i[1][0] + padding[0], i[1][1] + padding[1]), *i[2], **i[3])
+        for i in self.__paste_array:
+            result_image.paste(i[0], (i[1][0] + padding[0], i[1][1] + padding[1]), i[2], *i[3], **i[4])
+        return result_image
+
+    @property
+    def size(self) -> Tuple[int, int]:
+        return self.__used_width, self.__used_height
+
+
 def get_font_image(text: str, size: int, color: Tuple[int, int, int] = (0, 0, 0)) -> Image.Image:
     background = Image.new("RGBA", (len(text) * size, 100), (255, 255, 255, 0))
     background_draw = ImageDraw.Draw(background)
