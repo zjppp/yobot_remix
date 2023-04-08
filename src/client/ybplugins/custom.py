@@ -24,7 +24,7 @@ from quart import Quart
 from pathlib import Path
 import os
 import configparser
-from clan_battle.components.multi_cq_utils import refresh
+from .clan_battle.components.multi_cq_utils import refresh
 
 
 class Custom:
