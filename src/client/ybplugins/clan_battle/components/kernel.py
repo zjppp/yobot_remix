@@ -439,5 +439,5 @@ def execute(self, match_num, ctx):
 				return reply
 			reply += f"\n{_boss_num}王挂树的成员：\n"
 			for item in _dic[str(_boss_num)]:
-				reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}"
+				reply += f"{self._get_nickname_by_qqid(int(item[0]))}:{item[1]}\n"
 		return reply
