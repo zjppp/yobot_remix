@@ -268,7 +268,7 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
     if not chips_array:
         background = BackGroundGenerator(color=background_color, override_size=(OVERALL_CHIPS_LIST_WITH, CHIPS_MINIMUM_HEIGHT), padding=(5, 5, 5, 5))
         background.alpha_composite(text_image, (0, background.center(text_image)[1]))
-        text_image = get_font_image(f"暂无{text}", 28, (255, 255, 255) if is_white_text else (0, 0, 0))
+        text_image = get_font_image(f"暂无{text}", 24, (255, 255, 255) if is_white_text else (0, 0, 0))
         background.alpha_composite(text_image, background.center(text_image))
         return round_corner(background.generate(), 5)
 
@@ -367,7 +367,7 @@ class BossStatusImageCore:
         self.extra_chips_array = extra_chips_array
 
     def hp_percent_image(self) -> Image.Image:
-        HP_PERCENT_IMAGE_SIZE = (315, 30)
+        HP_PERCENT_IMAGE_SIZE = (315, 24)
         background = Image.new("RGBA", HP_PERCENT_IMAGE_SIZE, (200, 200, 200))
         background_draw = ImageDraw.Draw(background, "RGBA")
         percent_pixel_cursor_x = round(self.current_hp / self.max_hp * HP_PERCENT_IMAGE_SIZE[0])
@@ -397,8 +397,8 @@ class BossStatusImageCore:
         return round_corner(background)
 
     def cycle_round_image(self) -> Image.Image:
-        CYCLE_TEXT_SIZE = 28
-        CYCLE_IMAGE_HEIGHT = 32
+        CYCLE_TEXT_SIZE = 23
+        CYCLE_IMAGE_HEIGHT = 26
 
         text_str = f"{self.round} 周目"
         text_image = get_font_image(text_str, CYCLE_TEXT_SIZE, (255, 255, 255))
@@ -409,10 +409,10 @@ class BossStatusImageCore:
     def boss_panel_image(self) -> Image.Image:
         BOSS_HEADER_SIZE = 75
         background = BackGroundGenerator(color=(255, 255, 255, 0))
-        boss_name_image = get_font_image(self.name, 28)
-        background.alpha_composite(boss_name_image, (BOSS_HEADER_SIZE + 10, round((30 - boss_name_image.height) / 2)))
+        boss_name_image = get_font_image(self.name, 24)
+        background.alpha_composite(boss_name_image, (BOSS_HEADER_SIZE + 10, round((26 - boss_name_image.height) / 2)))
         background.alpha_composite(self.cycle_round_image(), (BOSS_HEADER_SIZE + 20 + boss_name_image.width, 0))
-        background.alpha_composite(self.hp_percent_image(), (BOSS_HEADER_SIZE + 10, 45))
+        background.alpha_composite(self.hp_percent_image(), (BOSS_HEADER_SIZE + 10, 75 - 24))
 
         if not BOSS_ICON_PATH.joinpath(self.boss_icon_id + ".webp").is_file():
             boss_icon = Image.new("RGBA", (128, 128), (255, 255, 255, 0))
