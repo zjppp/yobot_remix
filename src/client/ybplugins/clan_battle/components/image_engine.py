@@ -305,26 +305,48 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
     return round_corner(background.generate(), 5)
 
 
-# def get_process_image(finish_challenge_count: int, cycle: str, half_challenge_list: Dict[str, str]):
-#     overall_image = BackGroundGenerator()
+class GroupStateBlock:
+    def __init__(
+        self,
+        title_text: str,
+        data_text: str,
+        title_color: Tuple[int, int, int],
+        data_color: Tuple[int, int, int],
+        background_color: Tuple[int, int, int],
+    ) -> None:
+        self.title_text = title_text
+        self.data_text = data_text
+        self.title_color = title_color
+        self.data_color = data_color
+        self.background_color = background_color
 
-#     full_challenge_background = BackGroundGenerator()
-#     full_challenge_text = get_font_image(f"完整刀", 24)
-#     full_challenge_count_text = get_font_image(str(finish_challenge_count), 24, (255, 0, 0))
-#     full_challenge_background.alpha_composite(full_challenge_text, (0, 0))
-#     full_challenge_background.alpha_composite(full_challenge_count_text, (full_challenge_background.center(full_challenge_count_text)[0], 34))
 
-#     cycle_background = BackGroundGenerator()
-#     cycle_text = get_font_image(f"阶段", 24, (255, 255, 255))
-#     cycle_count_text = get_font_image(str(cycle), 24, (255, 255, 255))
-#     cycle_background.alpha_composite(cycle_text, (0, 0))
-#     cycle_background.alpha_composite(cycle_count_text, (cycle_background.center(cycle_count_text)[0], 34))
+def get_process_image(data: List[GroupStateBlock], chips_array: Dict[str, Dict[str, str]]):
+    overall_image = BackGroundGenerator(color=(255, 255, 255), padding=(10, 10, 10, 10), override_size=(400, None))
+    current_w, current_h = 0, 0
+    for i in data:
+        temp_background = BackGroundGenerator(padding=(10, 10, 10, 10), color=i.background_color)
+        temp_background.alpha_composite(get_font_image(i.title_text, 28, i.title_color), (0, 0))
+        data_image = get_font_image(i.data_text, 28, i.data_color)
+        temp_background.alpha_composite(data_image, (temp_background.center(data_image)[0], temp_background.use_height + 10))
 
-#     chips_list_image = chips_list(half_challenge_list, "补偿", (237, 231, 246))
-#     overall_image.alpha_composite(chips_list_image, (0, 78))
-#     overall_image.alpha_composite(round_corner(full_challenge_background.generate(color=(255, 205, 210), padding=(10, 10, 10, 10)), 5), (0, 0))
-#     overall_image.alpha_composite(round_corner(cycle_background.generate(color=(3, 169, 244), padding=(10, 10, 10, 10)), 5), (full_challenge_background.width + 30, 0))
-#     return overall_image.generate(padding=(10, 20, 10, 20))
+        if current_w + temp_background.width > 420:
+            current_w = 0
+            current_h = overall_image.use_height + 10
+
+        overall_image.alpha_composite(round_corner(temp_background.generate(), 5), (current_w, current_h))
+        current_w += temp_background.width + 10
+
+    current_h = overall_image.use_height + 10
+    for this_chips_list in chips_array:
+        chips_background_color = (240, 240, 240)
+        if this_chips_list in CHIPS_COLOR_DICT:
+            chips_background_color = CHIPS_COLOR_DICT[this_chips_list]
+        chips_list_image = chips_list(chips_array[this_chips_list], this_chips_list, chips_background_color)
+        overall_image.alpha_composite(chips_list_image, (0, current_h))
+        current_h += chips_list_image.height + 10
+
+    return overall_image.generate()
 
 
 class BossStatusImageCore:
@@ -414,7 +436,7 @@ class BossStatusImageCore:
             chips_list_image = chips_list(self.extra_chips_array[this_chips_list], this_chips_list, chips_background_color)
             background.alpha_composite(chips_list_image, (0, current_chips_height))
             current_chips_height += chips_list_image.height + 10
-        background.debug()
+        # background.debug()
         return background.generate()
 
 
