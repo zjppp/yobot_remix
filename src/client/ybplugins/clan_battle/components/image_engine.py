@@ -443,18 +443,26 @@ class BossStatusImageCore:
 def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None, after: Optional[Image.Image] = None) -> Image.Image:
     background = BackGroundGenerator()
     current_y_cursor = 0
+    current_x_cursor = 0
+    module_count = 0
     format_color_flag = False
 
     if before:
         background.paste(before, (0, 0))
         current_y_cursor += before.height
+        module_count += 1
         format_color_flag = True
 
     for this_image in boss_state:
         this_image = this_image.generate((249, 251, 231) if format_color_flag else (255, 255, 255))
-        background.paste(this_image, (0, current_y_cursor))
+        background.paste(this_image, (current_x_cursor, current_y_cursor))
         current_y_cursor += this_image.height
         format_color_flag = not format_color_flag
+        module_count += 1
+        if module_count == 3:
+            current_x_cursor = background.use_width + 10
+            current_y_cursor = 0
+            format_color_flag = True if format_color_flag else False
 
     if after:
         background.paste(after, (0, current_y_cursor))
