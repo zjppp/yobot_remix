@@ -331,7 +331,6 @@ def execute(self, match_num, ctx):
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
 		return msg
 
-
 	elif match_num == 15:  # 面板
 		if len(cmd) != 2: return
 		return f'公会战面板：\n{url}\n建议添加到浏览器收藏夹或桌面快捷方式'
@@ -430,9 +429,12 @@ def execute(self, match_num, ctx):
 	elif match_num == 30:
 		if len(cmd) != 2:
 			return
+		match = re.match(r'^查(树|[1-5]) *$', cmd)
+		if not match : return
+		msg = match.group(1)
 		reply = ""
 		flag = True
-		if match_num == 30:
+		if msg == "树":
 			_dic = self.query_tree(group_id=group_id, user_id=user_id)
 			for key in _dic:
 				if _dic[key] != []:
@@ -443,7 +445,7 @@ def execute(self, match_num, ctx):
 			if flag:
 				reply = "当前在任意Boss上无人挂树"
 		else:
-			_boss_num = match_num - 30
+			_boss_num = int(msg)
 			group:Clan_group = self.get_clan_group(group_id)
 			if group is None:raise GroupNotExist
 			reply += '\n'.join(self.challenger_info_small(group, str(_boss_num)))
