@@ -5,6 +5,7 @@ from pathlib import Path
 import httpx
 import asyncio
 import logging
+import time
 
 _logger = logging.getLogger(__name__)
 
@@ -28,7 +29,8 @@ def image_engine_init():
 class BackGroundGenerator:
     """
     被动背景生成器
-    不会立即创建Image对象及执行粘贴操作，以便动态生成画布大小
+    不会立即创建Image对象及执行粘贴操作  以便动态生成画布大小
+    注意  一旦生成图像后(generate()方法)  缓存的图像都会被销毁  不可再次生成
 
     :param color: 画布背景颜色
     :param padding: 画布外部拓展边距 (左 上 右 下)
@@ -68,14 +70,17 @@ class BackGroundGenerator:
     def generate(self) -> Image.Image:
         """
         生成最终图像
+        注意  只能生成一次  否则会引发Operation on closed image错误
 
         :return: 最终生成的图像
         """
         result_image = Image.new("RGBA", self.size, self.color)
         for i in self.__alpha_composite_array:
             result_image.alpha_composite(i[0], (i[1][0] + self.padding[0], i[1][1] + self.padding[1]), *i[2], **i[3])
+            i[0].close()
         for i in self.__paste_array:
             result_image.paste(i[0], (i[1][0] + self.padding[0], i[1][1] + self.padding[1]), i[2], *i[3], **i[4])
+            i[0].close()
         return result_image
 
     def debug(self) -> None:
@@ -161,7 +166,7 @@ def round_corner(image: Image.Image, radius: Optional[int] = None) -> Image.Imag
     else:
         size = radius * 2
 
-    circle_bg = Image.new("L", (size * 5, size * 5), 0)
+    circle_bg = Image.new("L", (size * 5, size * 5), 0)  # 已确保关闭
     circle_draw = ImageDraw.Draw(circle_bg)
     circle_draw.ellipse((0, 0, size * 5, size * 5), 255)
     circle_bg = circle_bg.resize((size, size))
@@ -170,7 +175,7 @@ def round_corner(image: Image.Image, radius: Optional[int] = None) -> Image.Imag
         circle_split_cursor_x = round(circle_bg.size[0] / 2)
         circle_split = (circle_bg.crop((0, 0, circle_split_cursor_x, size)), circle_bg.crop((circle_split_cursor_x, 0, size, size)))
 
-        mask = Image.new("L", image.size, 255)
+        mask = Image.new("L", image.size, 255)  # 已确保关闭
         mask.paste(circle_split[0], (0, 0))
         mask.paste(circle_split[1], (image.width - circle_split[1].width, 0))
     else:
@@ -180,15 +185,21 @@ def round_corner(image: Image.Image, radius: Optional[int] = None) -> Image.Imag
             circle_bg.crop((0, radius, radius, radius * 2)),
             circle_bg.crop((radius, radius, radius * 2, radius * 2)),
         )
-        mask = Image.new("L", image.size, 255)
+        mask = Image.new("L", image.size, 255)  # 已确保关闭
         mask.paste(circle_split[0], (0, 0))
         mask.paste(circle_split[1], (image.width - radius, 0))
         mask.paste(circle_split[2], (0, image.height - radius))
         mask.paste(circle_split[3], (image.width - radius, image.height - radius))
 
-    mask_paste_bg = Image.new("RGBA", image.size, (255, 255, 255, 0))
+    mask_paste_bg = Image.new("RGBA", image.size, (255, 255, 255, 0))  # 已确保关闭
 
-    return Image.composite(image, mask_paste_bg, mask)
+    result = Image.composite(image, mask_paste_bg, mask)
+
+    circle_bg.close()
+    mask_paste_bg.close()
+    mask.close()
+
+    return result
 
 
 def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
@@ -211,48 +222,71 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
     return round_corner(background.generate())
 
 
-def chips_list_sort(chips_image_list: List[Image.Image], width: int) -> List[List[Image.Image]]:
+def smaller_search(array: List[int], key, seek_map_array: Optional[List[int]] = None) -> Optional[int]:
+    """
+    使用二分查找法搜索目标对象的下标
+    二分查找法变种  因为查找的不是全等于key的值
+
+    :param array: 输入列表(必须有序且降序)
+    :param key: 目标数值
+    :param seek_map_array: 用于递归时传递下标map列表
+    :result: array中小于key的最大值下标
+    """
+    if array[-1] > key:
+        return None
+    length = len(array)
+    if not seek_map_array:
+        seek_map_array = [i for i in range(length)]
+    if length == 1:
+        return seek_map_array[0]
+    if length == 2:
+        return seek_map_array[0] if array[0] < key else seek_map_array[1]
+
+    half_seek = int(length / 2)
+
+    if array[half_seek] < key:
+        return smaller_search(array[: half_seek + 1], key, seek_map_array[: half_seek + 1])  # 中位数比key小  目标一定在左边  需要包含中位数本身
+    else:
+        return smaller_search(array[half_seek + 1 :], key, seek_map_array[half_seek + 1 :])  # 中位数比key大  目标一定在右边  不包含中位数本身
+
+
+def chips_list_sort(source_list: List[int], target_num: int, interval: int) -> List[List[int]]:
     """
     用户 chips 排版算法
-    从长到短  以从长到短chip为基础不断与短到长的chip匹配并添加  直至行宽超过最大值后换行
-    复杂度比较高  可能后期这里需要性能优化
+    以从长到短chip为基础不断与短到长的chip匹配并添加  直至行宽超过最大值后换行
     """
-    CHIPS_INTERVAL = 5
 
-    chips_image_line_list: List[List[Image.Image]] = []
-    chips_image_list.sort(key=lambda i: i.width, reverse=True)
-    if chips_image_list[0].width < chips_image_list[-1].width:
-        chips_image_list.reverse()
-    while chips_image_list:
-        this_wide_chip_image = chips_image_list[0]  # 从长(前)到短(后)
-        chips_image_list.pop(0)
-        chips_image_line_list.append([])
-        chips_image_line_list[-1].append(this_wide_chip_image)
-        current_width = this_wide_chip_image.width + CHIPS_INTERVAL
-        if not chips_image_list:  # 没有待处理的chip了
+    result_seek_list: List[List[int]] = []  # 存储输出结果(下标) [行号][chips 列号]
+    __address_map_list: List[int] = [i for i in range(len(source_list))]  # 存储结果对应下标
+
+    while source_list:
+        result_seek_list.append([])
+        result_seek_list[-1].append(__address_map_list[0])  # 从长(前)到短(后)
+        current_width = source_list[0] + interval
+
+        source_list.pop(0)
+        __address_map_list.pop(0)
+
+        if not source_list:  # 没有待处理的chip了
             break
-        if current_width + chips_image_list[-1].width > width:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，需要独占一行
+        if current_width + source_list[-1] >= target_num:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了  需要独占一行
             continue
-        while (current_width < width) and chips_image_list:  # 在待处理队列不为空且已使用的行宽不超过最大行宽前  不断从长到短添加chip
-            last_loop_result = len(chips_image_list) - 1  # 记录超出行宽前  在这一行添加的最宽chip索引
-            for this_short_chips_address in range(len(chips_image_list) - 1, -1, -1):  # 从短(索引最大)到长(索引最小)
-                if (current_width + chips_image_list[this_short_chips_address].width < width) and (this_short_chips_address != 0):  # 等于0时已经是待处理队列中最长的chip了(此时队列不包含刚刚添加的长chip)
-                    # 因为是从短到长  先找出这一行里面第二个能放下最长的chip
-                    last_loop_result = this_short_chips_address
-                    continue
-                if this_short_chips_address == 0 and (current_width + chips_image_list[this_short_chips_address].width < width):
-                    last_loop_result = 0
-                # 在这一行添加这个chip  与上面添加长chip的操作一样
-                this_sort_chip_image = chips_image_list[last_loop_result]
-                chips_image_list.pop(last_loop_result)
-                chips_image_line_list[-1].append(this_sort_chip_image)
-                current_width += this_sort_chip_image.width + CHIPS_INTERVAL  # 记录这个chip宽及间距
-                break  # 此时已经是这一行能放置的第二长chip了 没必要再向左找更长的chip了 要找的chip只可能在右边
-            if not chips_image_list:  # 没有待处理的chip了
+
+        while (current_width < target_num) and source_list:  # 在待处理队列不为空且已使用的行宽不超过最大行宽前  不断从长到短添加chip
+            target_seek = smaller_search(source_list, target_num - current_width)
+            if target_seek is None:
                 break
-            if current_width + chips_image_list[-1].width > width:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了，这一行已经完全没法放置新chip了
+            result_seek_list[-1].append(__address_map_list[target_seek])
+            current_width += source_list[target_seek] + interval  # 记录这个chip宽及间距
+
+            source_list.pop(target_seek)
+            __address_map_list.pop(target_seek)
+
+            if not source_list:  # 没有待处理的chip了
                 break
-    return chips_image_line_list
+            if current_width + source_list[-1] >= target_num:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了  这一行已经完全没法放置新chip了
+                break
+    return result_seek_list
 
 
 def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
@@ -276,28 +310,34 @@ def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", backgroun
     for user_id, user_nickname in chips_array.items():
         user_profile_path = USER_HEADERS_PATH.joinpath(user_id + ".jpg")
         if not user_profile_path.is_file():
-            user_profile_image = Image.new("RGBA", (20, 20), (255, 255, 255, 0))
+            user_profile_image = Image.new("RGBA", (20, 20), (255, 255, 255, 0))  # 已确保关闭
             glovar_missing_user_id.add(int(user_id))
         else:
-            user_profile_image = Image.open(USER_HEADERS_PATH.joinpath(user_id + ".jpg"), "r")
+            user_profile_image = Image.open(USER_HEADERS_PATH.joinpath(user_id + ".jpg"), "r")  # 已确保关闭
         chips_image_list.append(user_chips(user_profile_image, user_nickname))
 
-    chips_image_line_list = chips_list_sort(chips_image_list, CHIPS_LIST_WIDTH)  # 排序chips
+    chips_image_list.sort(key=lambda i: i.width, reverse=True)
+
+    chips_sort_seek_list = chips_list_sort(
+        source_list=list(map(lambda i: i.width, chips_image_list)),
+        interval=5,
+        target_num=CHIPS_LIST_WIDTH,
+    )  # 排序chips
 
     chips_background = BackGroundGenerator(color=background_color)
     this_height = 0
     this_width = 0
-    for this_chips_line in chips_image_line_list:
-        if not this_chips_line:
+    for this_chips_line_seeks in chips_sort_seek_list:
+        if not this_chips_line_seeks:
             continue
-        for this_chip_image in this_chips_line:
-            chips_background.alpha_composite(this_chip_image, (this_width, this_height))
-            this_width += this_chip_image.width + CHIPS_INTERVAL
+        for this_chip_image_seek in this_chips_line_seeks:
+            chips_background.alpha_composite(chips_image_list[this_chip_image_seek], (this_width, this_height))
+            this_width += chips_image_list[this_chip_image_seek].width + CHIPS_INTERVAL
         this_height += 30 + CHIPS_INTERVAL
         this_width = 0
 
     background = BackGroundGenerator(color=background_color, padding=(5, 5, 5, 5), override_size=(OVERALL_CHIPS_LIST_WITH, None))
-    background.alpha_composite(Image.new("RGBA", (1, CHIPS_MINIMUM_HEIGHT), (255, 255, 255, 0)), (0, 0))  # 限制最小chips list大小
+    background.alpha_composite(Image.new("RGBA", (1, CHIPS_MINIMUM_HEIGHT), (255, 255, 255, 0)), (0, 0))  # 限制最小chips list大小  已确保关闭
     background.alpha_composite(chips_background.generate(), (29, 0))
     background.alpha_composite(text_image, (0, background.center(text_image)[1]))
     # text_image.show()  ### 侧边文字调试 ###
@@ -368,7 +408,7 @@ class BossStatusImageCore:
 
     def hp_percent_image(self) -> Image.Image:
         HP_PERCENT_IMAGE_SIZE = (315, 24)
-        background = Image.new("RGBA", HP_PERCENT_IMAGE_SIZE, (200, 200, 200))
+        background = Image.new("RGBA", HP_PERCENT_IMAGE_SIZE, (200, 200, 200))  # 已确保关闭
         background_draw = ImageDraw.Draw(background, "RGBA")
         percent_pixel_cursor_x = round(self.current_hp / self.max_hp * HP_PERCENT_IMAGE_SIZE[0])
         background_draw.rectangle((0, 0, percent_pixel_cursor_x, HP_PERCENT_IMAGE_SIZE[1]), (255, 0, 0))
@@ -377,7 +417,7 @@ class BossStatusImageCore:
         text_image_white = get_font_image(text_str, 20, (255, 255, 255))
         text_image_black = get_font_image(text_str, 20)
         text_paste_center_start_cursor = center(background, text_image_white)
-        text_image = Image.new("RGBA", text_image_white.size)
+        text_image = Image.new("RGBA", text_image_white.size)  # 已确保关闭
         seek_in_text_image = percent_pixel_cursor_x - text_paste_center_start_cursor[0] + 1
         if seek_in_text_image <= 0:
             text_image = text_image_black
@@ -394,6 +434,8 @@ class BossStatusImageCore:
             )
         background.alpha_composite(text_image, text_paste_center_start_cursor)
 
+        text_image.close()
+
         return round_corner(background)
 
     def cycle_round_image(self) -> Image.Image:
@@ -402,7 +444,7 @@ class BossStatusImageCore:
 
         text_str = f"{self.round} 周目"
         text_image = get_font_image(text_str, CYCLE_TEXT_SIZE, (255, 255, 255))
-        background = Image.new("RGBA", (text_image.width + CYCLE_IMAGE_HEIGHT, CYCLE_IMAGE_HEIGHT), (3, 169, 244, 255))
+        background = Image.new("RGBA", (text_image.width + CYCLE_IMAGE_HEIGHT, CYCLE_IMAGE_HEIGHT), (3, 169, 244, 255))  # 已确保关闭
         background.alpha_composite(text_image, center(background, text_image))
         return round_corner(background)
 
@@ -415,9 +457,9 @@ class BossStatusImageCore:
         background.alpha_composite(self.hp_percent_image(), (BOSS_HEADER_SIZE + 10, 75 - 24))
 
         if not BOSS_ICON_PATH.joinpath(self.boss_icon_id + ".webp").is_file():
-            boss_icon = Image.new("RGBA", (128, 128), (255, 255, 255, 0))
+            boss_icon = Image.new("RGBA", (128, 128), (255, 255, 255, 0))  # 已确保关闭
         else:
-            boss_icon = Image.open(BOSS_ICON_PATH.joinpath(self.boss_icon_id + ".webp"), "r")
+            boss_icon = Image.open(BOSS_ICON_PATH.joinpath(self.boss_icon_id + ".webp"), "r")  # 已确保关闭
 
         boss_icon = boss_icon.resize((BOSS_HEADER_SIZE, BOSS_HEADER_SIZE))
         boss_icon = round_corner(boss_icon, 10)
@@ -500,3 +542,14 @@ async def download_missing_user_profile() -> None:
         return
     await download_user_profile_image(list(glovar_missing_user_id))
     glovar_missing_user_id = set()
+
+
+def pressure_test(*args, **kw):
+    print("Running pressure test...")
+    for i in range(20):
+        print(f"# {i} Start...")
+        start_time = time.time()
+        result_image = generate_combind_boss_state_image(*args, **kw)
+        result_image.save(USER_HEADERS_PATH.joinpath("debug", f"{time.time}.jpg"), "JPEG", quality=95)
+        result_image.close()
+        print(f"# {i} Run complete, took {round(time.time()-start_time,2)} seconds.")

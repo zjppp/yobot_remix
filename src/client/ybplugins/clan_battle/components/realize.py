@@ -20,7 +20,7 @@ from ..util import atqq, pcr_datetime, pcr_timestamp, timed_cached_func
 from ...ybdata import Clan_challenge, Clan_group, Clan_member, User, Clan_group_backups
 from ..exception import GroupError, GroupNotExist, InputError, UserError, UserNotInGroup
 from .multi_cq_utils import who_am_i
-from .image_engine import download_user_profile_image, generate_combind_boss_state_image, BossStatusImageCore, get_process_image, GroupStateBlock
+from .image_engine import download_user_profile_image, generate_combind_boss_state_image, BossStatusImageCore, get_process_image, GroupStateBlock, pressure_test
 
 _logger = logging.getLogger(__name__)
 FILE_PATH = os.path.dirname(__file__)
@@ -1322,10 +1322,12 @@ def challenger_info(self, group_id):
 		{"补偿": half_challenge_list}
 	)
 	result_image = generate_combind_boss_state_image(image_core_instance_list, process_image)
+	pressure_test(image_core_instance_list, process_image)
 	if result_image.mode != "RGB":
 		result_image = result_image.convert("RGB")
 	bio = BytesIO()
 	result_image.save(bio, format='JPEG', quality=95)
+	result_image.close()
 	base64_str = 'base64://' + base64.b64encode(bio.getvalue()).decode()
 	return f"[CQ:image,file={base64_str}]"
 
