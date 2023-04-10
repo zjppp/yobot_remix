@@ -153,10 +153,10 @@ def execute(self, match_num, ctx):
 
 
 	elif match_num == 4:  # 报刀
-		match = re.match(r'^(?:报刀 |报刀|刀|刀 ) ?(?:[\-\=]([1-5]))? ?(\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+		match = re.match(r'^(?:报刀|刀) ?(?:[\-\=]([1-5]))? ?(\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
 		if not match:
 			# 尝试使用另外的匹配模式
-			match = re.match(r'^(?:报刀 |报刀|刀|刀 )?([1-5])? (\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+			match = re.match(r'^(?:报刀|刀) ?([1-5])? (\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
 			if not match:
 				return '报刀格式:\n报刀 100w（需先申请出刀）\n报刀 -1 100w（-1表示报在1王）'
 		unit = {
@@ -186,7 +186,7 @@ def execute(self, match_num, ctx):
 
 
 	elif match_num == 5:  # 尾刀
-		match = re.match(r'^尾刀 ?([1-5])? *(补偿|补|b|bc)? ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+		match = re.match(r'^(?:尾刀|尾) ?([1-5])? *(补偿|补|b|bc)? ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
 		if not match: return
 		behalf = match.group(3) and int(match.group(3))
 		is_continue = match.group(2) and True or False
@@ -318,6 +318,19 @@ def execute(self, match_num, ctx):
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
 		return msg
 
+	elif match_num == 14:  # 取消申请出刀
+		match = re.match(r'^不(?:打|进)了 *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		if not match: return
+		behalf = match.group(1) and int(match.group(1))
+		if behalf: user_id = behalf
+		try:
+			msg =  self.cancel_blade(group_id, user_id)
+		except ClanBattleError as e:
+			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+			return str(e)
+		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+		return msg
+
 	elif match_num == 15:  # 面板
 		if len(cmd) != 2: return
 		return f'公会战面板：\n{url}\n建议添加到浏览器收藏夹或桌面快捷方式'
@@ -344,7 +357,7 @@ def execute(self, match_num, ctx):
 			return back_msg
 
 	elif match_num == 17:  # 报伤害
-		match = re.match(r'^报伤害(?:剩| |)(?:(\d+(?:s|S|秒))?(?:打了| |)(\d+)(?:w|W|万))? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		match = re.match(r'^(?:打了|报伤害)(?:剩| |)(?:(\d+(?:s|S|秒))?(?:打了| |)(\d+)(?:w|W|万))? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return '格式出错(O×O)，如“报伤害 2s200w”或“报伤害 3s300w@xxx”'
 		s = match.group(1) or 1
 		if s != 1: s = re.sub(r'([a-z]|[A-Z]|秒)', '', s)
@@ -413,12 +426,15 @@ def execute(self, match_num, ctx):
 			return str(e)
 
 
-	elif 30 <= match_num <= 35:
+	elif match_num == 30:
 		if len(cmd) != 2:
 			return
+		match = re.match(r'^查(树|[1-5]) *$', cmd)
+		if not match : return
+		msg = match.group(1)
 		reply = ""
 		flag = True
-		if match_num == 30:
+		if msg == "树":
 			_dic = self.query_tree(group_id=group_id, user_id=user_id)
 			for key in _dic:
 				if _dic[key] != []:
@@ -429,7 +445,7 @@ def execute(self, match_num, ctx):
 			if flag:
 				reply = "当前在任意Boss上无人挂树"
 		else:
-			_boss_num = match_num - 30
+			_boss_num = int(msg)
 			group:Clan_group = self.get_clan_group(group_id)
 			if group is None:raise GroupNotExist
 			reply += '\n'.join(self.challenger_info_small(group, str(_boss_num)))
