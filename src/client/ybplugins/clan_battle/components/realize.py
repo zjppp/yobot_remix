@@ -20,7 +20,7 @@ from ..util import atqq, pcr_datetime, pcr_timestamp, timed_cached_func
 from ...ybdata import Clan_challenge, Clan_group, Clan_member, User, Clan_group_backups
 from ..exception import GroupError, GroupNotExist, InputError, UserError, UserNotInGroup
 from .multi_cq_utils import who_am_i
-from .image_engine import download_user_profile_image, generate_combind_boss_state_image, BossStatusImageCore, get_process_image
+from .image_engine import download_user_profile_image, generate_combind_boss_state_image, BossStatusImageCore, get_process_image, GroupStateBlock
 
 _logger = logging.getLogger(__name__)
 FILE_PATH = os.path.dirname(__file__)
@@ -1295,7 +1295,6 @@ def challenger_info(self, group_id):
 				extra_info["预约"][str(user_id)] = self._get_nickname_by_qqid(user_id)[:4] + (f":{note}" if note else "")
 
 		image_core_instance_list.append(BossStatusImageCore(
-			self._level_by_cycle(this_boss_data['cycle'], group.game_server) + 1, 
 			this_boss_data['cycle'], 
 			this_boss_data["health"],
 			this_boss_data["full_health"],
@@ -1303,7 +1302,25 @@ def challenger_info(self, group_id):
 			this_boss_data["icon_id"],
 			extra_info
 		))
-	process_image = get_process_image(finish_challenge_count, half_challenge_list)
+	process_image = get_process_image(
+		[
+			GroupStateBlock(
+				title_text="完整刀",
+				data_text=str(finish_challenge_count),
+				title_color=(0, 0, 0),
+				data_color=(255, 0, 0),
+				background_color=(255, 205, 210),
+			),
+			GroupStateBlock(
+				title_text="阶段",
+				data_text=chr(65+self._level_by_cycle(group.boss_cycle, group.game_server)),
+				title_color=(255, 255, 255),
+				data_color=(255, 255, 255),
+				background_color=(3, 169, 244),
+			),
+		],
+		{"补偿": half_challenge_list}
+	)
 	result_image = generate_combind_boss_state_image(image_core_instance_list, process_image)
 	if result_image.mode != "RGB":
 		result_image = result_image.convert("RGB")
