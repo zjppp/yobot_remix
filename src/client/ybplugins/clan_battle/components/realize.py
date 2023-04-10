@@ -1326,6 +1326,7 @@ def challenger_info(self, group_id):
 		result_image = result_image.convert("RGB")
 	bio = BytesIO()
 	result_image.save(bio, format='JPEG', quality=95)
+	result_image.close()
 	base64_str = 'base64://' + base64.b64encode(bio.getvalue()).decode()
 	return f"[CQ:image,file={base64_str}]"
 
