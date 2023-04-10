@@ -542,14 +542,3 @@ async def download_missing_user_profile() -> None:
         return
     await download_user_profile_image(list(glovar_missing_user_id))
     glovar_missing_user_id = set()
-
-
-def pressure_test(*args, **kw):
-    print("Running pressure test...")
-    for i in range(20):
-        print(f"# {i} Start...")
-        start_time = time.time()
-        result_image = generate_combind_boss_state_image(*args, **kw)
-        result_image.save(USER_HEADERS_PATH.joinpath("debug", f"{time.time}.jpg"), "JPEG", quality=95)
-        result_image.close()
-        print(f"# {i} Run complete, took {round(time.time()-start_time,2)} seconds.")
