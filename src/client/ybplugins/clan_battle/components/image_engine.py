@@ -269,7 +269,7 @@ def chips_list_sort(source_list: List[int], target_num: int, interval: int) -> L
 
         if not source_list:  # 没有待处理的chip了
             break
-        if current_width + source_list[-1] >= target_num:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了  需要独占一行
+        if current_width + source_list[-1] > target_num:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了  需要独占一行
             continue
 
         while (current_width < target_num) and source_list:  # 在待处理队列不为空且已使用的行宽不超过最大行宽前  不断从长到短添加chip
@@ -284,7 +284,7 @@ def chips_list_sort(source_list: List[int], target_num: int, interval: int) -> L
 
             if not source_list:  # 没有待处理的chip了
                 break
-            if current_width + source_list[-1] >= target_num:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了  这一行已经完全没法放置新chip了
+            if current_width + source_list[-1] > target_num:  # 这一行(当前待处理队列最长)的chip加上最短(索引最大)的chip已经超过行宽了  这一行已经完全没法放置新chip了
                 break
     return result_seek_list
 
