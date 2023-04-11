@@ -889,8 +889,8 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 			raise GroupError('你申请的王和挂树的王不一样，怎么挂树啊 (╯‵□′)╯︵┻━┻')
 
 	challenging_member_list = safe_load_json(group.challenging_member_list, {})
-	for i in challenging_member_list.values():
-		if i[str(qqid)]['tree']:
+	for item in challenging_member_list.values():
+		if item.get(str(qqid)) != None and item.get(str(qqid)).get('tree'):
 			raise GroupError('您已经在树上了')
 	
 	challenging_member_list[boss_num][str(qqid)]['tree'] = True
