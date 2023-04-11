@@ -885,7 +885,7 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 				raise GroupError(str(e1)) 
 
 	challenging_member_list = safe_load_json(group.challenging_member_list, {})
-	for i in challenging_member_list:
+	for i in challenging_member_list.values():
 		if i[str(qqid)]['tree']:
 			raise GroupError('您已经在树上了')
 	
@@ -954,7 +954,7 @@ def take_it_of_the_tree(self, group_id: Groupid, qqid: QQid, boss_num=0, take_it
 		if not boss_num :
 			raise GroupError('你都没申请出刀，下啥子树啊 (╯‵□′)╯︵┻━┻')
 		qqid = str(qqid)
-		if challenging_member_list[boss_num][qqid]['tree'] == False:
+		if not challenging_member_list[boss_num][qqid]['tree']:
 			raise GroupError('你都没挂树，下啥子树啊 (╯‵□′)╯︵┻━┻')
 		challenging_member_list[boss_num][qqid]['tree'] = False
 		challenging_member_list[boss_num][qqid]['msg'] = None
