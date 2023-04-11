@@ -847,7 +847,7 @@ def get_subscribe_list(self, group_id: Groupid):
 	return back_info
 
 #挂树
-def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None):
+def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=False):
 	"""
 	放在树上
 
@@ -855,20 +855,25 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None):
 		group_id: QQ群号
 		qqid: 挂树的霉b/菜b的QQ号
 		message: 留言
+		boss_num: [可选]指定挂树的boss，若不指定则继续查找
 	"""
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None: raise GroupNotExist
 	user = User.get_or_none(qqid=qqid)
 	if user is None: raise GroupError('请先加入公会')
-	if not self.check_blade(group_id, qqid):
-		raise GroupError('你都没申请出刀，挂啥子树啊 (╯‵□′)╯︵┻━┻')
-
+ 
 	challenging_member_list = safe_load_json(group.challenging_member_list, {})
-	boss_num = self.get_in_boss_num(group_id, qqid)
-	if not boss_num :
-		raise GroupError('你都没申请出刀，挂啥子树啊 (╯‵□′)╯︵┻━┻')
+	if boss_num == False:
+		if not self.check_blade(group_id, qqid):
+			raise GroupError('你既没申请出刀，也没说挂哪个，挂啥子树啊 (╯‵□′)╯︵┻━┻')
+		else:
+			boss_num = self.get_in_boss_num(group_id, qqid)
+
 	if challenging_member_list[boss_num][str(qqid)]['tree']:
 		raise GroupError('您已经在树上了')
+	for i in range(1, 6):
+		if challenging_member_list[i][str(qqid)]['tree']:
+			raise GroupError('您已经在树上了')
 	
 	challenging_member_list[boss_num][str(qqid)]['tree'] = True
 	challenging_member_list[boss_num][str(qqid)]['msg'] = message
@@ -878,7 +883,7 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None):
 	self._boss_status[group_id] = asyncio.get_event_loop().create_future()
 	return '挂树惹~ (っ °Д °;)っ'
 
-
+#查树
 def query_tree(self, group_id: Groupid, user_id: QQid, boss_id=0) -> dict:
 	"""
 	Args:

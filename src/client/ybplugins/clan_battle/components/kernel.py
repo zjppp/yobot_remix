@@ -253,16 +253,18 @@ def execute(self, match_num, ctx):
 		return back_msg
 
 	elif match_num == 11:  # 挂树
-		match = re.match(r'^挂树 *(?:[\:：](.*))? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		match = re.match(r'挂树 *([1-5])? *(?:\[CQ:at,qq=(\d+)\])? *(?:[\:：](.*))? *$', cmd)
 		if not match: return
-		extra_msg = match.group(1)
+		extra_msg = match.group(3)
+		boss_num = match.group(1) and int(match.group(1))
+		boss_num = boss_num or False
 		behalf = match.group(2) and int(match.group(2))
 		behalf = behalf or user_id
 		if isinstance(extra_msg, str):
 			extra_msg = extra_msg.strip()
 			if not extra_msg: extra_msg = None
 		try:
-			msg = self.put_on_the_tree(group_id, behalf, extra_msg)
+			msg = self.put_on_the_tree(group_id, behalf, extra_msg, boss_num)
 			# if behalf:
 			# 	sender = self._get_nickname_by_qqid(user_id)
 			# 	self.behelf_remind(behalf, f'您的号被{sender}挂树上了。')
