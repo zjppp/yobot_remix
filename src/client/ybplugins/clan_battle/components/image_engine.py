@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
 from typing import Tuple, List, Optional, Dict, Set, Union
 from pathlib import Path
@@ -16,7 +16,7 @@ USER_HEADERS_PATH = Path(__file__).parent.joinpath("../../../yobot_data/user_pro
 BOSS_ICON_PATH = Path(__file__).parent.joinpath("../../../public/libs/yocool@final/princessadventure/boss_icon")
 
 # CHIPS_COLOR_LIST = [(229, 115, 115), (186, 104, 200), (149, 177, 205), (100, 181, 246), (77, 182, 172), (220, 231, 177)]
-CHIPS_COLOR_DICT = {"预约": (179, 229, 252), "挑战": (220, 237, 200), "挂树": (255, 205, 210)}
+CHIPS_COLOR_DICT = {"预约": (179, 229, 252), "挑战": (255, 249, 196), "挂树": (255, 205, 210)}
 
 glovar_missing_user_id: Set[int] = set()
 
@@ -362,7 +362,7 @@ class GroupStateBlock:
 
 
 def get_process_image(data: List[GroupStateBlock], chips_array: Dict[str, Dict[str, str]]):
-    overall_image = BackGroundGenerator(color=(255, 255, 255), padding=(10, 10, 10, 10), override_size=(400, None))
+    overall_image = BackGroundGenerator(color=(254, 251, 234), padding=(10, 10, 10, 10), override_size=(400, None))
     current_w, current_h = 0, 0
     for i in data:
         temp_background = BackGroundGenerator(padding=(10, 10, 10, 10), color=i.background_color)
@@ -482,32 +482,75 @@ class BossStatusImageCore:
         return background.generate()
 
 
-def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None, after: Optional[Image.Image] = None) -> Image.Image:
-    background = BackGroundGenerator()
+def makeShadow(image: Image.Image, iterations: int, border: int, offset: Tuple[int, int], backgroundColour, shadowColour):
+    # https://en.wikibooks.org/wiki/Python_Imaging_Library/Drop_Shadows
+    # image: base image to give a drop shadow
+    # iterations: number of times to apply the blur filter to the shadow
+    # border: border to give the image to leave space for the shadow
+    # offset: offset of the shadow as [x,y]
+    # backgroundCOlour: colour of the background
+    # shadowColour: colour of the drop shadow
+
+    # Calculate the size of the shadow's image
+    fullWidth = image.size[0] + abs(offset[0]) + 2 * border
+    fullHeight = image.size[1] + abs(offset[1]) + 2 * border
+
+    # Create the shadow's image. Match the parent image's mode.
+    shadow = Image.new(image.mode, (fullWidth, fullHeight), backgroundColour)
+
+    # Place the shadow, with the required offset
+    shadowLeft = border + max(offset[0], 0)  # if <0, push the rest of the image right
+    shadowTop = border + max(offset[1], 0)  # if <0, push the rest of the image down
+    # Paste in the constant colour
+    shadow.paste(shadowColour, [shadowLeft, shadowTop, shadowLeft + image.size[0], shadowTop + image.size[1]])
+
+    # Apply the BLUR filter repeatedly
+    for i in range(iterations):
+        shadow = shadow.filter(ImageFilter.BLUR)
+
+    # shadow.show()
+
+    # Paste the original image on top of the shadow
+    imgLeft = border - min(offset[0], 0)  # if the shadow offset was <0, push right
+    imgTop = border - min(offset[1], 0)  # if the shadow offset was <0, push down
+    shadow.alpha_composite(image, (imgLeft, imgTop))
+
+    return shadow
+
+
+def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None) -> Image.Image:
+    INTERVAL = 20
+    SHADOW_BORDER = 5
+
+    background = BackGroundGenerator(color=(248, 239, 200), padding=(20, 20, 20 - SHADOW_BORDER, 20 - SHADOW_BORDER))
     current_y_cursor = 0
     current_x_cursor = 0
     module_count = 0
     format_color_flag = False
 
     if before:
-        background.paste(before, (0, 0))
-        current_y_cursor += before.height
+        background.alpha_composite(
+            makeShadow(round_corner(before, 10), 1, SHADOW_BORDER, (5, 5), (248, 239, 200), (248 - 20, 239 - 20, 200 - 20)),
+            (current_x_cursor, current_y_cursor),
+        )
+        current_y_cursor += before.height + INTERVAL
         module_count += 1
         format_color_flag = True
 
     for this_image in boss_state:
-        this_image = this_image.generate((249, 251, 231) if format_color_flag else (255, 255, 255))
-        background.paste(this_image, (current_x_cursor, current_y_cursor))
-        current_y_cursor += this_image.height
+        this_image = this_image.generate((254, 251, 234))
+        background.alpha_composite(
+            makeShadow(round_corner(this_image, 10), 1, SHADOW_BORDER, (5, 5), (248, 239, 200), (248 - 10, 239 - 10, 200 - 10)),
+            # round_corner(this_image, 10),
+            (current_x_cursor, current_y_cursor),
+        )
+        current_y_cursor += this_image.height + INTERVAL
         format_color_flag = not format_color_flag
         module_count += 1
         if module_count == 3:
-            current_x_cursor = background.use_width + 10
+            current_x_cursor += this_image.width + INTERVAL
             current_y_cursor = 0
             format_color_flag = True if format_color_flag else False
-
-    if after:
-        background.paste(after, (0, current_y_cursor))
 
     return background.generate()
 
