@@ -887,8 +887,8 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 
 	if challenging_member_list[boss_num][str(qqid)]['tree']:
 		raise GroupError('您已经在树上了')
-	for i in range(1, 6):
-		if challenging_member_list[i][str(qqid)]['tree']:
+	for i in challenging_member_list:
+		if i[str(qqid)]['tree']:
 			raise GroupError('您已经在树上了')
 	
 	challenging_member_list[boss_num][str(qqid)]['tree'] = True
