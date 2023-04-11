@@ -861,7 +861,7 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 	if group is None: raise GroupNotExist
 	user = User.get_or_none(qqid=qqid)
 	if user is None: raise GroupError('请先加入公会')
- 
+
 	challenging_member_list = safe_load_json(group.challenging_member_list, {})
 	if boss_num == False:
 		if not self.check_blade(group_id, qqid):
@@ -869,7 +869,22 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 		else:
 			boss_num = self.get_in_boss_num(group_id, qqid)
 
-	if challenging_member_list[str(boss_num)][str(qqid)]['tree']:
+	if not self.check_blade(group_id, qqid):
+		try:
+			self.apply_for_challenge(False, group_id, qqid, boss_num, qqid, False)
+		except GroupError as e1:
+			if '完整' in str(e1):
+				try:
+					self.apply_for_challenge(True, group_id, qqid, boss_num, qqid, False)
+				except GroupError as e2:
+					if '补偿' in str(e2):
+						raise GroupError('你今天都下班了，挂啥子树啊 (╯‵□′)╯︵┻━┻')
+					else:
+						raise GroupError(str(e2))
+			else:
+				raise GroupError(str(e1)) 
+
+	if challenging_member_list[boss_num][str(qqid)]['tree']:
 		raise GroupError('您已经在树上了')
 	for i in range(1, 6):
 		if challenging_member_list[i][str(qqid)]['tree']:
@@ -1511,7 +1526,3 @@ def get_member_list(self, group_id: Groupid) -> List[Dict[str, Any]]:
 			'sl': user.clan_member.last_save_slot,
 		})
 	return member_list
-
-
-
-
