@@ -867,6 +867,10 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 			raise GroupError('你既没申请出刀，也没说挂哪个，挂啥子树啊 (╯‵□′)╯︵┻━┻')
 		else:
 			boss_num = self.get_in_boss_num(group_id, qqid)
+	else:
+		if self.get_in_boss_num(group_id, qqid) != boss_num:
+			raise GroupError('你申请的王和挂树的王不一样，怎么挂树啊 (╯‵□′)╯︵┻━┻')
+
 	boss_num = str(boss_num)
 
 	if not self.check_blade(group_id, qqid):
