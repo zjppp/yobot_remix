@@ -862,7 +862,6 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 	user = User.get_or_none(qqid=qqid)
 	if user is None: raise GroupError('请先加入公会')
 
-	challenging_member_list = safe_load_json(group.challenging_member_list, {})
 	if boss_num == False:
 		if not self.check_blade(group_id, qqid):
 			raise GroupError('你既没申请出刀，也没说挂哪个，挂啥子树啊 (╯‵□′)╯︵┻━┻')
@@ -885,8 +884,7 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 			else:
 				raise GroupError(str(e1)) 
 
-	if challenging_member_list[boss_num][str(qqid)]['tree']:
-		raise GroupError('您已经在树上了')
+	challenging_member_list = safe_load_json(group.challenging_member_list, {})
 	for i in challenging_member_list:
 		if i[str(qqid)]['tree']:
 			raise GroupError('您已经在树上了')
@@ -956,6 +954,8 @@ def take_it_of_the_tree(self, group_id: Groupid, qqid: QQid, boss_num=0, take_it
 		if not boss_num :
 			raise GroupError('你都没申请出刀，下啥子树啊 (╯‵□′)╯︵┻━┻')
 		qqid = str(qqid)
+		if challenging_member_list[boss_num][qqid]['tree'] == False:
+			raise GroupError('你都没挂树，下啥子树啊 (╯‵□′)╯︵┻━┻')
 		challenging_member_list[boss_num][qqid]['tree'] = False
 		challenging_member_list[boss_num][qqid]['msg'] = None
 		group.challenging_member_list = json.dumps(challenging_member_list)
