@@ -28,8 +28,6 @@ a = Analysis(
     datas=[
         ("packedfiles", "packedfiles"),
         ("public", "public"),
-        (f"{sitepackages_location('opencc')}/opencc/config", "opencc/config"),
-        (f"{sitepackages_location('opencc')}/opencc/dictionary", "opencc/dictionary"),
     ],
     hiddenimports=[],
     hookspath=[],
