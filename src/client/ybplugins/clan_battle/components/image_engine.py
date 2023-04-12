@@ -203,8 +203,12 @@ def round_corner(image: Image.Image, radius: Optional[int] = None) -> Image.Imag
 
 
 def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
+    OVERALL_CHIPS_LIST_WITH = 400 - 10  # 左右各5边距
+    CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
+    TEXT_MAXIMUM_WIDTH = CHIPS_LIST_WIDTH - 35  # 25为chip本身  10为chip自己外边距以及user_chips外边距
     USER_PROFILE_SIZE = 20
     USER_NICKNAME_FONTSIZE = 20
+    CHIPS_HEIGHT = 20
 
     head_icon = head_icon.resize((USER_PROFILE_SIZE, USER_PROFILE_SIZE))
     head_icon = round_corner(head_icon)
@@ -214,7 +218,10 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
 
     user_name_image = get_font_image(user_name, USER_NICKNAME_FONTSIZE, (255, 255, 255) if is_white_text else (0, 0, 0))
 
-    background = BackGroundGenerator(color=background_color, padding=(5, 5, 5, 5))
+    if user_name_image.width > TEXT_MAXIMUM_WIDTH:
+        user_name_image = user_name_image.crop((0, 0, TEXT_MAXIMUM_WIDTH, CHIPS_HEIGHT))
+
+    background = BackGroundGenerator(color=background_color, padding=(5, 5, 5, 5), override_size=(None, CHIPS_HEIGHT))
     background.alpha_composite(head_icon, (0, 0))
     if user_name_image.getbbox() is not None:
         background.alpha_composite(user_name_image, (25, background.center(user_name_image)[1]))
