@@ -1256,7 +1256,7 @@ def challenger_info(self, group_id):
 
 	finish_challenge_count = sum(bool(c.boss_health_remain or c.is_continue) for c in challenges)
 
-	half_challenge_list:Dict[str,str] = {}
+	half_challenge_list:Dict[str, Any] = {"style-background-color": (240,240,240)}
 	for qqid, num in end_blade_qqid.items() :
 		if num < 0:
 			continue
@@ -1264,13 +1264,17 @@ def challenger_info(self, group_id):
 
 	challenging_list = safe_load_json(group.challenging_member_list)
 	group_boss_data = self._boss_data_dict(group)
-	image_core_instance_list = []
+	boss_state_image_list:List[Union[Image.Image, BossStatusImageCore]] = []
 	subscribe_handler = SubscribeHandler(group=group)
+	
 	for boss_num in range(1,6):
 		this_boss_data = group_boss_data[boss_num]
 		boss_num_str = str(boss_num)
-		extra_info = {"预约":{}, "挑战":{}}
-		if challenging_list and (boss_num_str in challenging_list):
+		extra_info = {
+			"预约":{"style-background-color": (179, 229, 252)},
+			"挑战":{"style-background-color": (255, 249, 196)},
+		}
+		if challenging_list and boss_num_str in challenging_list:
 			for challenger, info in challenging_list[boss_num_str].items():
 				challenger = str(challenger)
 				challenger_nickname = self._get_nickname_by_qqid(challenger)[:4]
@@ -1285,7 +1289,7 @@ def challenger_info(self, group_id):
 				if info['tree']:
 					challenger_msg += '(挂树)'
 					if "挂树" not in extra_info:
-						extra_info["挂树"] = {}
+						extra_info["挂树"] = {"style-background-color": (255, 205, 210)}
 					extra_info["挂树"][challenger] = challenger_nickname
 				extra_info["挑战"][challenger] = challenger_msg
 		
@@ -1294,7 +1298,7 @@ def challenger_info(self, group_id):
 			for user_id, note in subscribe_list.items():
 				extra_info["预约"][str(user_id)] = self._get_nickname_by_qqid(user_id)[:4] + (f":{note}" if note else "")
 
-		image_core_instance_list.append(BossStatusImageCore(
+		boss_state_image_list.append(BossStatusImageCore(
 			this_boss_data['cycle'], 
 			this_boss_data["health"],
 			this_boss_data["full_health"],
@@ -1321,13 +1325,14 @@ def challenger_info(self, group_id):
 		],
 		{"补偿": half_challenge_list}
 	)
-	result_image = generate_combind_boss_state_image(image_core_instance_list, process_image)
+	result_image = generate_combind_boss_state_image([process_image, *boss_state_image_list])
 	if result_image.mode != "RGB":
 		result_image = result_image.convert("RGB")
 	bio = BytesIO()
 	result_image.save(bio, format='JPEG', quality=95)
 	result_image.close()
 	base64_str = 'base64://' + base64.b64encode(bio.getvalue()).decode()
+	bio.close()
 	return f"[CQ:image,file={base64_str}]"
 
 #出刀记录
