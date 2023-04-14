@@ -557,7 +557,7 @@ def generate_combind_boss_state_image(image_list: List[Union[Image.Image, BossSt
             current_y_cursor = 0
             format_color_flag = True if format_color_flag else False
 
-    return round_corner(background.generate(), 30)
+    return background.generate()
 
 
 async def download_pic(url: str, proxies: Optional[str] = None, file_name="") -> Optional[Path]:
