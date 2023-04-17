@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
-from typing import Tuple, List, Optional, Dict, Set, Union
+from typing import Tuple, List, Optional, Dict, Set, Union, Any
 from pathlib import Path
 import httpx
 import asyncio
@@ -14,9 +14,6 @@ FONTS_PATH = os.path.join(FILE_PATH, "fonts")
 FONTS = os.path.join(FONTS_PATH, "msyh.ttf")
 USER_HEADERS_PATH = Path(__file__).parent.joinpath("../../../yobot_data/user_profile")
 BOSS_ICON_PATH = Path(__file__).parent.joinpath("../../../public/libs/yocool@final/princessadventure/boss_icon")
-
-# CHIPS_COLOR_LIST = [(229, 115, 115), (186, 104, 200), (149, 177, 205), (100, 181, 246), (77, 182, 172), (220, 231, 177)]
-CHIPS_COLOR_DICT = {"预约": (179, 229, 252), "挑战": (255, 249, 196), "挂树": (255, 205, 210)}
 
 glovar_missing_user_id: Set[int] = set()
 
@@ -198,11 +195,12 @@ def round_corner(image: Image.Image, radius: Optional[int] = None) -> Image.Imag
     circle_bg.close()
     mask_paste_bg.close()
     mask.close()
+    image.close()
 
     return result
 
 
-def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
+def user_chips(head_icon: Image.Image, user_name: str, background_color: Tuple[int, int, int] = (189, 189, 189)) -> Image.Image:
     OVERALL_CHIPS_LIST_WITH = 400 - 10  # 左右各5边距
     CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
     TEXT_MAXIMUM_WIDTH = CHIPS_LIST_WIDTH - 35  # 25为chip本身  10为chip自己外边距以及user_chips外边距
@@ -213,10 +211,9 @@ def user_chips(head_icon: Image.Image, user_name: str) -> Image.Image:
     head_icon = head_icon.resize((USER_PROFILE_SIZE, USER_PROFILE_SIZE))
     head_icon = round_corner(head_icon)
 
-    background_color = (189, 189, 189)
-    is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
+    text_color = (255, 255, 255) if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else (0, 0, 0)
 
-    user_name_image = get_font_image(user_name, USER_NICKNAME_FONTSIZE, (255, 255, 255) if is_white_text else (0, 0, 0))
+    user_name_image = get_font_image(user_name, USER_NICKNAME_FONTSIZE, text_color)
 
     if user_name_image.width > TEXT_MAXIMUM_WIDTH:
         user_name_image = user_name_image.crop((0, 0, TEXT_MAXIMUM_WIDTH, CHIPS_HEIGHT))
@@ -296,32 +293,40 @@ def chips_list_sort(source_list: List[int], target_num: int, interval: int) -> L
     return result_seek_list
 
 
-def chips_list(chips_array: Dict[str, str] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
+def chips_list(chips_array: Dict[str, Any] = {}, text: str = "内容", background_color: Tuple[int, int, int] = (255, 255, 255)) -> Image.Image:
     global glovar_missing_user_id
     OVERALL_CHIPS_LIST_WITH = 400 - 10  # 左右各5边距
     CHIPS_LIST_WIDTH = OVERALL_CHIPS_LIST_WITH - 29
     CHIPS_INTERVAL = 5
     CHIPS_MINIMUM_HEIGHT = 65
 
-    is_white_text = True if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else False
-    text_image = get_font_image("\n".join([i for i in text]), 24, (255, 255, 255) if is_white_text else (0, 0, 0))
+    background_color = chips_array.pop("style-background-color", background_color)
+    chips_color = chips_array.pop("style-chips-color", (189, 189, 189))
+    text_color = (255, 255, 255) if ((background_color[0] * 0.299 + background_color[1] * 0.587 + background_color[2] * 0.114) / 255) < 0.5 else (0, 0, 0)
+    # text_color = chips_array.get("style-text-color", text_color)
+
+    text_image = get_font_image("\n".join([i for i in text]), 24, text_color)
 
     if not chips_array:
         background = BackGroundGenerator(color=background_color, override_size=(OVERALL_CHIPS_LIST_WITH, CHIPS_MINIMUM_HEIGHT), padding=(5, 5, 5, 5))
         background.alpha_composite(text_image, (0, background.center(text_image)[1]))
-        text_image = get_font_image(f"暂无{text}", 24, (255, 255, 255) if is_white_text else (0, 0, 0))
+        text_image = get_font_image(f"暂无{text}", 24, text_color)
         background.alpha_composite(text_image, background.center(text_image))
         return round_corner(background.generate(), 5)
 
     chips_image_list = []
     for user_id, user_nickname in chips_array.items():
+        if not user_id.isdigit():
+            continue
+        if not isinstance(user_nickname, str):
+            continue
         user_profile_path = USER_HEADERS_PATH.joinpath(user_id + ".jpg")
         if not user_profile_path.is_file():
             user_profile_image = Image.new("RGBA", (20, 20), (255, 255, 255, 0))  # 已确保关闭
             glovar_missing_user_id.add(int(user_id))
         else:
             user_profile_image = Image.open(USER_HEADERS_PATH.joinpath(user_id + ".jpg"), "r")  # 已确保关闭
-        chips_image_list.append(user_chips(user_profile_image, user_nickname))
+        chips_image_list.append(user_chips(user_profile_image, user_nickname, chips_color))
 
     chips_image_list.sort(key=lambda i: i.width, reverse=True)
 
@@ -386,10 +391,7 @@ def get_process_image(data: List[GroupStateBlock], chips_array: Dict[str, Dict[s
 
     current_h = overall_image.use_height + 10
     for this_chips_list in chips_array:
-        chips_background_color = (240, 240, 240)
-        if this_chips_list in CHIPS_COLOR_DICT:
-            chips_background_color = CHIPS_COLOR_DICT[this_chips_list]
-        chips_list_image = chips_list(chips_array[this_chips_list], this_chips_list, chips_background_color)
+        chips_list_image = chips_list(chips_array[this_chips_list], this_chips_list)
         overall_image.alpha_composite(chips_list_image, (0, current_h))
         current_h += chips_list_image.height + 10
 
@@ -404,7 +406,7 @@ class BossStatusImageCore:
         max_hp: int,
         name: str,
         boss_icon_id: str,
-        extra_chips_array: Dict[str, Dict[str, str]],
+        extra_chips_array: Dict[str, Dict[str, Any]],
     ) -> None:
         self.current_hp = current_hp
         self.max_hp = max_hp
@@ -479,10 +481,7 @@ class BossStatusImageCore:
         background.alpha_composite(self.boss_panel_image(), (0, 0))
         current_chips_height = background.use_height + 10
         for this_chips_list in self.extra_chips_array:
-            chips_background_color = (240, 240, 240)
-            if this_chips_list in CHIPS_COLOR_DICT:
-                chips_background_color = CHIPS_COLOR_DICT[this_chips_list]
-            chips_list_image = chips_list(self.extra_chips_array[this_chips_list], this_chips_list, chips_background_color)
+            chips_list_image = chips_list(self.extra_chips_array[this_chips_list], this_chips_list)
             background.alpha_composite(chips_list_image, (0, current_chips_height))
             current_chips_height += chips_list_image.height + 10
         # background.debug()
@@ -522,10 +521,12 @@ def makeShadow(image: Image.Image, iterations: int, border: int, offset: Tuple[i
     imgTop = border - min(offset[1], 0)  # if the shadow offset was <0, push down
     shadow.alpha_composite(image, (imgLeft, imgTop))
 
+    image.close()
+
     return shadow
 
 
-def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], before: Optional[Image.Image] = None) -> Image.Image:
+def generate_combind_boss_state_image(image_list: List[Union[Image.Image, BossStatusImageCore]]) -> Image.Image:
     INTERVAL = 20
     SHADOW_BORDER = 5
 
@@ -535,19 +536,16 @@ def generate_combind_boss_state_image(boss_state: List[BossStatusImageCore], bef
     module_count = 0
     format_color_flag = False
 
-    if before:
-        background.alpha_composite(
-            makeShadow(round_corner(before, 10), 1, SHADOW_BORDER, (5, 5), (248, 239, 200), (248 - 20, 239 - 20, 200 - 20)),
-            (current_x_cursor, current_y_cursor),
-        )
-        current_y_cursor += before.height + INTERVAL
-        module_count += 1
-        format_color_flag = True
+    for this_image in image_list:
+        if isinstance(this_image, BossStatusImageCore):
+            this_image = this_image.generate((254, 251, 234))
+        elif isinstance(this_image, Image.Image):
+            pass
+        else:
+            raise ValueError(f"Unknown image type: {type(this_image)}")
 
-    for this_image in boss_state:
-        this_image = this_image.generate((254, 251, 234))
         background.alpha_composite(
-            makeShadow(round_corner(this_image, 10), 1, SHADOW_BORDER, (5, 5), (248, 239, 200), (248 - 10, 239 - 10, 200 - 10)),
+            makeShadow(round_corner(this_image, 10), 1, SHADOW_BORDER, (5, 5), (248, 239, 200), (248 - 20, 239 - 20, 200 - 20)),
             # round_corner(this_image, 10),
             (current_x_cursor, current_y_cursor),
         )
