@@ -1354,13 +1354,12 @@ def challenger_info(self, group_id):
 	result_image = generate_combind_boss_state_image([process_image, *boss_state_image_list])
 	if result_image.mode != "RGB":
 		result_image = result_image.convert("RGB")
-	USER_HEADERS_PATH = Path(__file__).parent.joinpath("../../../yobot_data/cache/state/")
-	if not USER_HEADERS_PATH.is_dir():
-		USER_HEADERS_PATH.mkdir(parents=True, exist_ok=True)
-	file_name = str(group_id) + ".jpg"
-	result_image.save(USER_HEADERS_PATH.joinpath(file_name), format='JPEG', quality=95)
+	bio = BytesIO()
+	result_image.save(bio, format='JPEG', quality=95)
 	result_image.close()
-	return f"[CQ:image,file=file:///{str(USER_HEADERS_PATH.joinpath(file_name))}]"
+	base64_str = 'base64://' + base64.b64encode(bio.getvalue()).decode()
+	bio.close()
+	return f"[CQ:image,file={base64_str}]"
 
 #出刀记录
 def challenge_record(self, group_id):
