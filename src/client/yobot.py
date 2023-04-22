@@ -15,7 +15,6 @@ from urllib.parse import urljoin
 import requests
 from aiocqhttp.api import Api
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from opencc import OpenCC
 from quart import Quart, make_response, request, send_file
 
 if __package__:
@@ -233,10 +232,6 @@ class Yobot:
         async def yobot_output(filename):
             return await send_file(os.path.join(dirname, "output", filename))
 
-        # openCC
-        self.ccs2t = OpenCC(self.glo_setting.get("zht_out_style", "s2t"))
-        self.cct2s = OpenCC("t2s")
-
         # filter
         self.black_list = set(self.glo_setting["black-list"])
         self.black_list_group = set(self.glo_setting["black-list-group"])
@@ -307,9 +302,6 @@ class Yobot:
                 if msg["group_id"] in self.black_list_group:
                     return None
 
-        # zht-zhs convertion
-        if self.glo_setting.get("zht_in", False):
-            msg["raw_message"] = self.cct2s.convert(msg["raw_message"])
         if msg["sender"].get("card", "") == "":
             msg["sender"]["card"] = msg["sender"].get("nickname", "无法获取昵称")
 
@@ -331,8 +323,6 @@ class Yobot:
                 raise ValueError('unsupport return type: {}'.format(type(ret)))
 
         if reply_msg:
-            if self.glo_setting.get("zht_out", False):
-                reply_msg = self.ccs2t.convert(reply_msg)
             return reply_msg
 
         # run
@@ -359,10 +349,6 @@ class Yobot:
                 if res["block"]:
                     break
         reply_msg = "\n".join(replys)
-
-        # zhs-zht convertion
-        if self.glo_setting.get("zht_out", False):
-            reply_msg = self.ccs2t.convert(reply_msg)
 
         return reply_msg
 
