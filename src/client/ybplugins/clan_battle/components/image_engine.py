@@ -407,6 +407,7 @@ class BossStatusImageCore:
         name: str,
         boss_icon_id: str,
         extra_chips_array: Dict[str, Dict[str, Any]],
+        is_next: bool,
     ) -> None:
         self.current_hp = current_hp
         self.max_hp = max_hp
@@ -414,6 +415,7 @@ class BossStatusImageCore:
         self.name = name
         self.boss_icon_id = boss_icon_id
         self.extra_chips_array = extra_chips_array
+        self.is_next = is_next
 
     def hp_percent_image(self) -> Image.Image:
         HP_PERCENT_IMAGE_SIZE = (315, 24)
@@ -453,7 +455,8 @@ class BossStatusImageCore:
 
         text_str = f"{self.round} 周目"
         text_image = get_font_image(text_str, CYCLE_TEXT_SIZE, (255, 255, 255))
-        background = Image.new("RGBA", (text_image.width + CYCLE_IMAGE_HEIGHT, CYCLE_IMAGE_HEIGHT), (3, 169, 244, 255))  # 已确保关闭
+        color_code = (106, 152, 243, 255) if self.is_next else (228, 94, 104, 255)
+        background = Image.new("RGBA", (text_image.width + CYCLE_IMAGE_HEIGHT, CYCLE_IMAGE_HEIGHT), color_code)  # 已确保关闭
         background.alpha_composite(text_image, center(background, text_image))
         return round_corner(background)
 
