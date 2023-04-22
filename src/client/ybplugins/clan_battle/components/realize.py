@@ -1328,10 +1328,12 @@ def challenger_info(self, group_id):
 			this_boss_data['cycle'], 
 			this_boss_data["health"],
 			this_boss_data["full_health"],
-			this_boss_data["name"],
+			boss_num_str + '-' + this_boss_data["name"],
 			this_boss_data["icon_id"],
-			extra_info
+			extra_info,
+			this_boss_data['is_next']
 		))
+	level_cycle = self._level_by_cycle(group.boss_cycle, group.game_server)
 	process_image = get_process_image(
 		[
 			GroupStateBlock(
@@ -1343,10 +1345,10 @@ def challenger_info(self, group_id):
 			),
 			GroupStateBlock(
 				title_text="阶段",
-				data_text=chr(65+self._level_by_cycle(group.boss_cycle, group.game_server)),
+				data_text=chr(65+level_cycle),
 				title_color=(255, 255, 255),
 				data_color=(255, 255, 255),
-				background_color=(3, 169, 244),
+				background_color=[(132, 1, 244), (115, 166, 231), (206, 105, 165), (206, 80, 66), (181, 105, 206)][level_cycle],
 			),
 		],
 		{"补偿": half_challenge_list}
