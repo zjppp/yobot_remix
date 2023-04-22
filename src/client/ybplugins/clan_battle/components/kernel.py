@@ -145,7 +145,7 @@ def execute(self, match_num, ctx):
 	elif match_num == 3:  # 状态
 		if cmd != '状态': return
 		try: 
-			boss_summary = self.boss_status_summary(group_id)
+			boss_summary = f'详情可在网页查看：\n{url}\n' + self.boss_status_summary(group_id)
 			asyncio.ensure_future(download_missing_user_profile())
 		except ClanBattleError as e:
 			return str(e)
