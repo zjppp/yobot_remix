@@ -23,6 +23,7 @@ from quart import Quart
 
 from pathlib import Path
 import os
+import sys
 import configparser
 from .clan_battle.components.multi_cq_utils import refresh
 
@@ -65,7 +66,7 @@ class Custom:
         # @app.route('/is-bot-running', methods=['GET'])
         # async def check_bot():
         #     return 'yes, bot is running'
-        self.inipath = Path(os.path.dirname(__file__)).parent / 'yobot_data' / 'groups.ini'
+        self.inipath = Path.cwd().resolve().joinpath("./yobot_data/groups.ini") if "_MEIPASS" in dir(sys) else Path(os.path.dirname(__file__)).parent / 'yobot_data' / 'groups.ini'
 
     async def execute_async(self, ctx: Dict[str, Any]) -> Union[None, bool, str]:
         '''

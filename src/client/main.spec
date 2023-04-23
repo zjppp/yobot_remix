@@ -28,6 +28,7 @@ a = Analysis(
     datas=[
         ("packedfiles", "packedfiles"),
         ("public", "public"),
+        ('ybplugins/clan_battle/components/fonts/', 'fonts'),
     ],
     hiddenimports=[],
     hookspath=[],

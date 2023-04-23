@@ -59,11 +59,12 @@ def init(self,
 		User.qqid.in_(self.setting['super-admin'])
 	).execute()
 
+	import sys
 	from pathlib import Path
-	inipath = Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
+	inipath = Path.cwd().resolve().joinpath("./yobot_data/groups.ini") if "_MEIPASS" in dir(sys) else Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
 	if not inipath.exists():
-		if not (Path(os.path.dirname(__file__)).parents[2] / 'yobot_data').exists():
-			os.mkdir(str(Path(os.path.dirname(__file__)).parents[2] / 'yobot_data'))
+		if not (Path(inipath).resolve().parent).exists(): #直接取上级的目录
+			os.mkdir(str(Path(inipath).resolve().parent))
 		inipath.touch()
 		with open(inipath,'w') as f:
 			f.write('[GROUPS]\n11111 = 22222')
@@ -107,9 +108,10 @@ def execute(self, match_num, ctx):
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+		import sys
 		from pathlib import Path
 		import configparser
-		inipath = Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
+		inipath = Path.cwd().resolve().joinpath("./yobot_data/groups.ini") if "_MEIPASS" in dir(sys) else Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
 		config=configparser.RawConfigParser()
 		config.read(str(inipath))
 		config.set('GROUPS', str(ctx['group_id']), str(ctx['self_id']))
@@ -145,7 +147,7 @@ def execute(self, match_num, ctx):
 	elif match_num == 3:  # 状态
 		if cmd != '状态': return
 		try: 
-			boss_summary = self.boss_status_summary(group_id)
+			boss_summary = f'详情请用“面板”命令在网页查看~\n' + self.boss_status_summary(group_id)
 			asyncio.ensure_future(download_missing_user_profile())
 		except ClanBattleError as e:
 			return str(e)
