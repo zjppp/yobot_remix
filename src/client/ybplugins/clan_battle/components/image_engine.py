@@ -4,16 +4,12 @@ from typing import Tuple, List, Optional, Dict, Set, Union, Any
 from pathlib import Path
 import httpx
 import asyncio
-import logging
-import time
-
-_logger = logging.getLogger(__name__)
 
 FILE_PATH = os.path.dirname(__file__)
 FONTS_PATH = os.path.join(FILE_PATH, "fonts")
 FONTS = os.path.join(FONTS_PATH, "msyh.ttf")
-USER_HEADERS_PATH = Path(__file__).parent.joinpath("../../../yobot_data/user_profile")
-BOSS_ICON_PATH = Path(__file__).parent.joinpath("../../../public/libs/yocool@final/princessadventure/boss_icon")
+USER_HEADERS_PATH = Path(__file__).parent.parent.parent.parent.joinpath("./yobot_data/user_profile")
+BOSS_ICON_PATH = Path(__file__).parent.parent.parent.parent.joinpath("./public/libs/yocool@final/princessadventure/boss_icon")
 
 glovar_missing_user_id: Set[int] = set()
 
