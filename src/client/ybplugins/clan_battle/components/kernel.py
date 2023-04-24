@@ -365,7 +365,7 @@ def execute(self, match_num, ctx):
 		if not match: return '格式出错(O×O)，如“报伤害 2s200w”或“报伤害 3s300w@xxx”'
 		s = match.group(1) or 1
 		if s != 1: s = re.sub(r'([a-z]|[A-Z]|秒)', '', s)
-		hurt = match.group(2) and int(match.group(2))
+		hurt = match.group(2) and int(match.group(2)) or 0
 		behalf = match.group(3) and int(match.group(3))
 		if behalf: user_id = behalf
 		if not self.check_blade(group_id, user_id):
@@ -406,7 +406,7 @@ def execute(self, match_num, ctx):
 			if (ctx['sender']['role'] not in ['owner', 'admin']) and (ctx['user_id'] not in self.setting['super-admin']):
 				return '只有管理员或主人可使用重置进度功能'
 			available_empty_battle_id = self._get_available_empty_battle_id(group_id)
-			group = Clan_group.get_or_none(group_id=group_id)
+			group = self.get_clan_group(group_id=group_id)
 			current_data_slot_record = group.battle_id
 			if current_data_slot_record == available_empty_battle_id:
 				return "当前档案记录为空，无需重置"
