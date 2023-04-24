@@ -693,11 +693,17 @@ def challenge(self,
 	nik = self._get_nickname_by_qqid(qqid)
 	behalf_nik = behalf and f'（{self._get_nickname_by_qqid(behalf)}代）' or ''
 	if defeat:
-		msg = '{}{}对{}号boss造成了{:,}点伤害，击败了boss\n（今日第{}刀，{}）\n'.format(
-			nik, behalf_nik, boss_num, challenge_damage, finished+1, '尾余刀' if is_continue else '收尾刀')
+		# 击败boss，补偿+1，已完成刀数需分情况
+		msg = '{}{}对{}号boss造成了{:,}点伤害，击败了boss\n（今日已完成{}刀，还有补偿刀{}刀，本刀是{}）\n'.format(
+			nik, behalf_nik, boss_num, challenge_damage,
+   			finished+1 if is_continue else finished,
+   			cont_blade-1 if is_continue else cont_blade+1,
+   			'尾余刀' if is_continue else '收尾刀')
 	else:
-		msg = '{}{}对{}号boss造成了{:,}点伤害\n（今日第{}刀，{}）\n'.format(
-			nik, behalf_nik, boss_num, challenge_damage, finished+1, '剩余刀' if is_continue else '完整刀')
+		# 未击败boss，无论是补偿还是非补偿已出刀数+1，不会增加补偿数
+		msg = '{}{}对{}号boss造成了{:,}点伤害\n（今日已出完整刀{}刀，还有补偿刀{}刀，本刀是{}）\n'.format(
+			nik, behalf_nik, boss_num, challenge_damage, finished+1, cont_blade-1 if is_continue else cont_blade, '剩余刀' if is_continue else '完整刀')
+		
 	msg += '\n'.join(self.challenger_info_small(group, boss_num))
 
 	self._boss_status[group_id].set_result((self._boss_data_dict(group), group.boss_cycle, msg))
