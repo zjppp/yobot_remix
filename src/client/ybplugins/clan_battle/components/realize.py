@@ -1258,7 +1258,7 @@ def challenger_info_small(self, group:Clan_group, boss_num, msg:List = None):
 			if info['behalf']:
 				behalf = self._get_nickname_by_qqid(info['behalf'])
 				temp_msg += f'({behalf}代刀)'
-			if info['damage'] > 0:
+			if (0 if info['damage'] is None else info['damage']) > 0:
 				temp_msg += f', 剩{info["s"]}秒，打了{info["damage"]}万伤害'
 			if info['tree']:
 				temp_msg += ', 已挂树'
@@ -1323,7 +1323,7 @@ def challenger_info(self, group_id):
 				if info['behalf']:
 					behalf = self._get_nickname_by_qqid(info['behalf'])[:4]
 					challenger_msg += f'({behalf}代)'
-				if info['damage'] > 0:
+				if (0 if info['damage'] is None else info['damage']) > 0:
 					challenger_msg += f'@{info["s"]}s,{info["damage"]}w'
 				if info['tree']:
 					challenger_msg += '(挂树)'
