@@ -1,8 +1,9 @@
 import configparser
 from pathlib import Path
 import os
+import sys
 
-ginipath = Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
+ginipath = Path.cwd().resolve().joinpath("./yobot_data/groups.ini") if "_MEIPASS" in dir(sys) else Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
 config = configparser.ConfigParser()
 config.read(str(ginipath),  encoding='utf-8')
 

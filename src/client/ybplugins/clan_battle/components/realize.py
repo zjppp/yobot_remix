@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 import json
 import peewee
 import base64
@@ -24,16 +25,22 @@ from .multi_cq_utils import who_am_i
 from .image_engine import download_user_profile_image, generate_combind_boss_state_image, BossStatusImageCore, get_process_image, GroupStateBlock
 
 _logger = logging.getLogger(__name__)
-FILE_PATH = os.path.dirname(__file__)
+FILE_PATH = Path(sys._MEIPASS).resolve() if "_MEIPASS" in dir(sys) else Path(__file__).resolve().parent
 
 def safe_load_json(text, back = None):
 	return text and json.loads(text) or back
+
 def text_2_pic(self, text:string, weight:int, height:int, bg_color:Tuple, text_color:string, font_size:int, text_offset:Tuple):
 	im = Image.new("RGB", (weight, height), bg_color)
 	dr = ImageDraw.Draw(im)
 	FONTS_PATH = os.path.join(FILE_PATH,'fonts')
 	FONTS = os.path.join(FONTS_PATH,'msyh.ttf')
-	font = ImageFont.truetype(FONTS, font_size)
+	try:
+    # 尝试使用指定的字体加载
+		font = ImageFont.truetype(FONTS, font_size)
+	except OSError:
+    # 加载失败时使用默认字体
+		font = ImageFont.load_default()
 	dr.text(text_offset, text, font=font, fill=text_color)
 	bio = BytesIO()
 	im.save(bio, format='PNG')
