@@ -933,6 +933,30 @@ def query_tree(self, group_id: Groupid, user_id: QQid, boss_id=0) -> dict:
 				result[boss_id].append((qid, challenging_member_list[boss_id][qid]['msg']))
 	return result
 
+#是否挂树
+def check_tree(self, group_id: Groupid, user_id: QQid):
+	"""
+	查查这位大聪明在不在树上，在树上返回在哪个王(int)，不在树上返回False
+
+	Args:
+		group_id: QQ群号
+		qqid: 可能挂树的大聪明的QQ号
+	"""
+	qid = str(user_id)
+	group:Clan_group = get_clan_group(self, group_id)
+	if group is None: raise GroupNotExist
+	user = User.get_or_none(qqid=user_id)
+	if user is None: raise GroupError('请先加入公会')
+	challenging_member_list = safe_load_json(group.challenging_member_list, {})
+	for i in range(1, 6):
+		try:
+			for qid in challenging_member_list[str(i)]:
+				if challenging_member_list[str(i)][qid]['tree']:
+					return i
+		except KeyError:
+			continue
+	return False
+
 
 #下树
 def take_it_of_the_tree(self, group_id: Groupid, qqid: QQid, boss_num=0, take_it_type = 0, send_web = True):
@@ -1156,17 +1180,22 @@ def save_slot(self, group_id: Groupid, qqid: QQid,
 		if membership.last_save_slot != today: raise UserError('您今天还没有SL过')
 		membership.last_save_slot = 0
 		membership.save()
-		return '已取消SL'
+		return '已取消SL。若已申请/挂树，需重新报告。'
 	if only_check:
 		return (membership.last_save_slot == today)
 	if membership.last_save_slot == today:
-		raise UserError('您今天已经SL过了，该不会退游戏了吧 Σ(っ °Д °;)っ')
+		raise UserError('您今天已经SL过了，该不会退游戏了吧？ Σ(っ °Д °;)っ')
 	membership.last_save_slot = today
+	if self.check_blade(group_id, qqid):
+		self.cancel_blade(group_id, qqid)
+	tree_check = self.check_tree(group_id, qqid)
+	if tree_check:
+		self.take_it_of_the_tree(group_id, qqid)
 	membership.save()
 
 	# refresh
 	self.get_member_list(group_id, nocache = True)
-	return 'SL用掉惹 Σ(っ °Д °;)っ'
+	return '已记录SL。若已申请/挂树，需重新报告。 Σ(っ °Д °;)っ'
 
 #记录伤害/清空伤害
 def report_hurt(self, s, hurt, group_id:Groupid, qqid:QQid, clean_type = 0):
