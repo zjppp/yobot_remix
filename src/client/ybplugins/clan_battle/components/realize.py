@@ -302,12 +302,16 @@ def modify(self, group_id: Groupid, cycle=None, bossData=None):
 	next_cycle_level = self._level_by_cycle(cycle and cycle+1 or group.boss_cycle+1, group.game_server)
 	now_health = safe_load_json(group.now_cycle_boss_health, {})
 	next_health = safe_load_json(group.next_cycle_boss_health, {})
+	now_cycle_level = self._level_by_cycle(cycle or group.boss_cycle, group.game_server)
 
 	for boss_num, data in bossData.items():
 		next_cycle_full_boss_health = self.setting['boss'][group.game_server][next_cycle_level][int(boss_num)-1]
 		if data["is_next"]:
-			now_health[boss_num] = 0
-			next_health[boss_num] = data["health"]
+			if now_cycle_level == next_cycle_level:
+				now_health[boss_num] = 0
+				next_health[boss_num] = data["health"]
+			else:
+				raise InputError('设置为下个周目的BOSS与当前周目BOSS不可处于不同阶段。')
 		else:
 			now_health[boss_num] = data["health"]
 			next_health[boss_num] = next_cycle_full_boss_health
@@ -703,9 +707,9 @@ def challenge(self,
 		# 击败boss，补偿+1，已完成刀数需分情况
 		msg = '{}{}对{}号boss造成了{:,}点伤害，击败了boss\n（今日已完成{}刀，还有补偿刀{}刀，本刀是{}）\n'.format(
 			nik, behalf_nik, boss_num, challenge_damage,
-   			finished+1 if is_continue else finished,
-   			cont_blade-1 if is_continue else cont_blade+1,
-   			'尾余刀' if is_continue else '收尾刀')
+			finished+1 if is_continue else finished,
+			cont_blade-1 if is_continue else cont_blade+1,
+			'尾余刀' if is_continue else '收尾刀')
 	else:
 		# 未击败boss，无论是补偿还是非补偿已出刀数+1，不会增加补偿数
 		msg = '{}{}对{}号boss造成了{:,}点伤害\n（今日已出完整刀{}刀，还有补偿刀{}刀，本刀是{}）\n'.format(
