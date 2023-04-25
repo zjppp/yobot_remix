@@ -71,6 +71,7 @@ class ClanBattle:
 	challenger_info_small = challenger_info_small			##单个boss出刀信息
 	check_blade = check_blade								##检查是否已申请出刀
 	put_on_the_tree = put_on_the_tree						##挂树
+	check_tree = check_tree									##检查此用户在不在树上
 	take_it_of_the_tree = take_it_of_the_tree				##下树
 	get_in_boss_num = get_in_boss_num						##获取boss_num
 	subscribe = subscribe									##预约

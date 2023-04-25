@@ -1205,7 +1205,7 @@ def save_slot(self, group_id: Groupid, qqid: QQid,
 	membership.last_save_slot = today
 	if self.check_blade(group_id, qqid):
 		self.cancel_blade(group_id, qqid)
-	tree_check = check_tree(group_id, qqid)
+	tree_check = self.check_tree(group_id, qqid)
 	if tree_check:
 		self.take_it_of_the_tree(group_id, qqid)
 	membership.save()
