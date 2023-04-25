@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 import json
 import peewee
 import base64
@@ -24,16 +25,22 @@ from .multi_cq_utils import who_am_i
 from .image_engine import download_user_profile_image, generate_combind_boss_state_image, BossStatusImageCore, get_process_image, GroupStateBlock
 
 _logger = logging.getLogger(__name__)
-FILE_PATH = os.path.dirname(__file__)
+FILE_PATH = Path(sys._MEIPASS).resolve() if "_MEIPASS" in dir(sys) else Path(__file__).resolve().parent
 
 def safe_load_json(text, back = None):
 	return text and json.loads(text) or back
+
 def text_2_pic(self, text:string, weight:int, height:int, bg_color:Tuple, text_color:string, font_size:int, text_offset:Tuple):
 	im = Image.new("RGB", (weight, height), bg_color)
 	dr = ImageDraw.Draw(im)
 	FONTS_PATH = os.path.join(FILE_PATH,'fonts')
 	FONTS = os.path.join(FONTS_PATH,'msyh.ttf')
-	font = ImageFont.truetype(FONTS, font_size)
+	try:
+    # 尝试使用指定的字体加载
+		font = ImageFont.truetype(FONTS, font_size)
+	except OSError:
+    # 加载失败时使用默认字体
+		font = ImageFont.load_default()
 	dr.text(text_offset, text, font=font, fill=text_color)
 	bio = BytesIO()
 	im.save(bio, format='PNG')
@@ -693,11 +700,17 @@ def challenge(self,
 	nik = self._get_nickname_by_qqid(qqid)
 	behalf_nik = behalf and f'（{self._get_nickname_by_qqid(behalf)}代）' or ''
 	if defeat:
-		msg = '{}{}对{}号boss造成了{:,}点伤害，击败了boss\n（今日第{}刀，{}）\n'.format(
-			nik, behalf_nik, boss_num, challenge_damage, finished+1, '尾余刀' if is_continue else '收尾刀')
+		# 击败boss，补偿+1，已完成刀数需分情况
+		msg = '{}{}对{}号boss造成了{:,}点伤害，击败了boss\n（今日已完成{}刀，还有补偿刀{}刀，本刀是{}）\n'.format(
+			nik, behalf_nik, boss_num, challenge_damage,
+   			finished+1 if is_continue else finished,
+   			cont_blade-1 if is_continue else cont_blade+1,
+   			'尾余刀' if is_continue else '收尾刀')
 	else:
-		msg = '{}{}对{}号boss造成了{:,}点伤害\n（今日第{}刀，{}）\n'.format(
-			nik, behalf_nik, boss_num, challenge_damage, finished+1, '剩余刀' if is_continue else '完整刀')
+		# 未击败boss，无论是补偿还是非补偿已出刀数+1，不会增加补偿数
+		msg = '{}{}对{}号boss造成了{:,}点伤害\n（今日已出完整刀{}刀，还有补偿刀{}刀，本刀是{}）\n'.format(
+			nik, behalf_nik, boss_num, challenge_damage, finished+1, cont_blade-1 if is_continue else cont_blade, '剩余刀' if is_continue else '完整刀')
+		
 	msg += '\n'.join(self.challenger_info_small(group, boss_num))
 
 	self._boss_status[group_id].set_result((self._boss_data_dict(group), group.boss_cycle, msg))
@@ -1274,7 +1287,7 @@ def challenger_info_small(self, group:Clan_group, boss_num, msg:List = None):
 			if info['behalf']:
 				behalf = self._get_nickname_by_qqid(info['behalf'])
 				temp_msg += f'({behalf}代刀)'
-			if info['damage'] > 0:
+			if (0 if info['damage'] is None else info['damage']) > 0:
 				temp_msg += f', 剩{info["s"]}秒，打了{info["damage"]}万伤害'
 			if info['tree']:
 				temp_msg += ', 已挂树'
@@ -1339,7 +1352,7 @@ def challenger_info(self, group_id):
 				if info['behalf']:
 					behalf = self._get_nickname_by_qqid(info['behalf'])[:4]
 					challenger_msg += f'({behalf}代)'
-				if info['damage'] > 0:
+				if (0 if info['damage'] is None else info['damage']) > 0:
 					challenger_msg += f'@{info["s"]}s,{info["damage"]}w'
 				if info['tree']:
 					challenger_msg += '(挂树)'
@@ -1357,10 +1370,12 @@ def challenger_info(self, group_id):
 			this_boss_data['cycle'], 
 			this_boss_data["health"],
 			this_boss_data["full_health"],
-			this_boss_data["name"],
+			boss_num_str + '-' + this_boss_data["name"],
 			this_boss_data["icon_id"],
-			extra_info
+			extra_info,
+			this_boss_data['is_next']
 		))
+	level_cycle = self._level_by_cycle(group.boss_cycle, group.game_server)
 	process_image = get_process_image(
 		[
 			GroupStateBlock(
@@ -1372,10 +1387,10 @@ def challenger_info(self, group_id):
 			),
 			GroupStateBlock(
 				title_text="阶段",
-				data_text=chr(65+self._level_by_cycle(group.boss_cycle, group.game_server)),
+				data_text=chr(65+level_cycle),
 				title_color=(255, 255, 255),
 				data_color=(255, 255, 255),
-				background_color=(3, 169, 244),
+				background_color=[(132, 1, 244), (115, 166, 231), (206, 105, 165), (206, 80, 66), (181, 105, 206)][level_cycle],
 			),
 		],
 		{"补偿": half_challenge_list}

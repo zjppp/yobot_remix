@@ -1,19 +1,16 @@
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
+import sys
 from typing import Tuple, List, Optional, Dict, Set, Union, Any
 from pathlib import Path
 import httpx
 import asyncio
-import logging
-import time
 
-_logger = logging.getLogger(__name__)
-
-FILE_PATH = os.path.dirname(__file__)
+FILE_PATH = Path(sys._MEIPASS).resolve() if "_MEIPASS" in dir(sys) else Path(__file__).resolve().parent
 FONTS_PATH = os.path.join(FILE_PATH, "fonts")
 FONTS = os.path.join(FONTS_PATH, "msyh.ttf")
-USER_HEADERS_PATH = Path(__file__).parent.joinpath("../../../yobot_data/user_profile")
-BOSS_ICON_PATH = Path(__file__).parent.joinpath("../../../public/libs/yocool@final/princessadventure/boss_icon")
+USER_HEADERS_PATH = Path.cwd().resolve().joinpath("./yobot_data/user_profile") if "_MEIPASS" in dir(sys) else Path(__file__).parent.parent.parent.parent.joinpath("./yobot_data/user_profile")
+BOSS_ICON_PATH = Path(__file__).parent.parent.parent.parent.joinpath("./public/libs/yocool@final/princessadventure/boss_icon")
 
 glovar_missing_user_id: Set[int] = set()
 
@@ -407,6 +404,7 @@ class BossStatusImageCore:
         name: str,
         boss_icon_id: str,
         extra_chips_array: Dict[str, Dict[str, Any]],
+        is_next: bool,
     ) -> None:
         self.current_hp = current_hp
         self.max_hp = max_hp
@@ -414,6 +412,7 @@ class BossStatusImageCore:
         self.name = name
         self.boss_icon_id = boss_icon_id
         self.extra_chips_array = extra_chips_array
+        self.is_next = is_next
 
     def hp_percent_image(self) -> Image.Image:
         HP_PERCENT_IMAGE_SIZE = (315, 24)
@@ -453,7 +452,8 @@ class BossStatusImageCore:
 
         text_str = f"{self.round} 周目"
         text_image = get_font_image(text_str, CYCLE_TEXT_SIZE, (255, 255, 255))
-        background = Image.new("RGBA", (text_image.width + CYCLE_IMAGE_HEIGHT, CYCLE_IMAGE_HEIGHT), (3, 169, 244, 255))  # 已确保关闭
+        color_code = (106, 152, 243, 255) if self.is_next else (228, 94, 104, 255)
+        background = Image.new("RGBA", (text_image.width + CYCLE_IMAGE_HEIGHT, CYCLE_IMAGE_HEIGHT), color_code)  # 已确保关闭
         background.alpha_composite(text_image, center(background, text_image))
         return round_corner(background)
 

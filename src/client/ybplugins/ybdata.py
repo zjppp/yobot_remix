@@ -41,7 +41,7 @@ class User(_BaseModel):
     privacy = IntegerField(default=MAX_TRY_TIMES)  # 密码错误次数
     clan_group_id = BigIntegerField(null=True)
     last_login_time = BigIntegerField(default=0)
-    last_login_ipaddr = IPField(default="0.0.0.0")
+    last_login_ipaddr = TextField(default="0.0.0.0")
     password = FixedCharField(max_length=64, null=True)
     must_change_password = BooleanField(default=True)
     login_code = FixedCharField(max_length=6, null=True)
@@ -56,7 +56,7 @@ class User_login(_BaseModel):
     auth_cookie = FixedCharField(max_length=64)
     auth_cookie_expire_time = BigIntegerField(default=0)
     last_login_time = BigIntegerField(default=0)
-    last_login_ipaddr = IPField(default="0.0.0.0")
+    last_login_ipaddr = TextField(default="0.0.0.0")
 
     class Meta:
         primary_key = CompositeKey("qqid", "auth_cookie")
