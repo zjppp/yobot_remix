@@ -362,5 +362,5 @@ def get_version(base_version: str, base_commit:  int) -> dict:
         return {
             "run-as": "python",
             "commited": False,
-            "ver_name": f"ReMix-{base_version}"
+            "ver_name": f"Remix-{base_version}"
         }
