@@ -910,11 +910,11 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 	if not self.check_blade(group_id, qqid):
 		try:
 			self.apply_for_challenge(False, group_id, qqid, boss_num, send_web=False, behalfed=behalf)
-		except GroupError as e1:
+		except Exception as e1:
 			if '完整' in str(e1):
 				try:
 					self.apply_for_challenge(True, group_id, qqid, boss_num, send_web=False, behalfed=behalf)
-				except GroupError as e2:
+				except Exception as e2:
 					if '补偿' in str(e2):
 						raise GroupError('你今天都下班了，挂啥子树啊 (╯‵□′)╯︵┻━┻')
 					else:
@@ -929,12 +929,15 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 	for item in challenging_member_list.values():
 		if item.get(str(qqid)) != None and item.get(str(qqid)).get('tree'):
 			raise GroupError('您已经在树上了')
-	
-	challenging_member_list[boss_num][str(qqid)]['tree'] = True
 
 	if (behalf is None) and (behalf_is_member is None):
+		challenging_member_list[boss_num][str(qqid)]['tree'] = True
 		challenging_member_list[boss_num][str(qqid)]['msg'] = message
-	else:
+	elif behalf_is_member == True:
+		challenging_member_list[boss_num][str(behalf)]['tree'] = True
+		challenging_member_list[boss_num][str(behalf)]['msg'] = f'[「{behalf_nickname}」代挂]' + str(message)
+	elif behalf_is_member == False:
+		challenging_member_list[boss_num][str(qqid)]['tree'] = True
 		challenging_member_list[boss_num][str(qqid)]['msg'] = f'[「{behalf_nickname}」代挂]' + str(message)
 
 	group.challenging_member_list = json.dumps(challenging_member_list)
