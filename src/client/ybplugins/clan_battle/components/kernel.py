@@ -267,7 +267,7 @@ def execute(self, match_num, ctx):
 			if not extra_msg:
 				extra_msg = None
 		try:
-			msg = self.put_on_the_tree(group_id, user_id, extra_msg, boss_num, behalf=behalf)
+			msg = self.put_on_the_tree(group_id, user_id, extra_msg, boss_num, behalfed=behalf)
 			# if behalf:
 			# 	sender = self._get_nickname_by_qqid(user_id)
 			# 	self.behelf_remind(behalf, f'您的号被{sender}挂树上了。')
