@@ -865,37 +865,59 @@ def get_subscribe_list(self, group_id: Groupid):
 	return back_info
 
 #挂树
-def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=False):
+def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=False, behalfed=None):
 	"""
 	放在树上
 
 	Args:
 		group_id: QQ群号
-		qqid: 挂树的霉b/菜b的QQ号
+		qqid: 报告挂树的qq号（不一定为真正挂树的成员
 		message: 留言
 		boss_num: [可选]指定挂树的boss，若不指定则继续查找
+		behalf：[可选]真正挂树的qq号，默认None，视为报告挂树者挂树
 	"""
 	group:Clan_group = get_clan_group(self, group_id)
 	if group is None: raise GroupNotExist
-	user = User.get_or_none(qqid=qqid)
-	if user is None: raise GroupError('请先加入公会')
+
+	challenger = behalfed and behalfed or qqid
+	behalf_is_member = None
+	if behalfed:
+		behalf = qqid
+		if User.get_or_none(qqid=behalf) is None:
+			behalf_is_member = False
+			behalf_nickname = str(behalf)
+			behalf = None
+		else:
+			behalf_is_member = True
+			behalf_nickname = self._get_nickname_by_qqid(behalf)
+	else:
+		behalf = None
+
+	if User.get_or_none(qqid=challenger) is None:
+		raise GroupError('请挂树者先加入公会')
+	challenger_nickname = self._get_nickname_by_qqid(challenger)
 
 	if boss_num == False:
-		if not self.check_blade(group_id, qqid):
+		if not self.check_blade(group_id, challenger):
 			raise GroupError('你既没申请出刀，也没说挂哪个，挂啥子树啊 (╯‵□′)╯︵┻━┻')
 		else:
-			boss_num = self.get_in_boss_num(group_id, qqid)
+			boss_num = self.get_in_boss_num(group_id, challenger)
 
 	boss_num = str(boss_num)
-
-	if not self.check_blade(group_id, qqid):
+	if not self.check_blade(group_id, challenger):
 		try:
-			self.apply_for_challenge(False, group_id, qqid, boss_num, qqid, False)
-		except GroupError as e1:
+			if behalfed:
+				self.apply_for_challenge(False, group_id, behalf, boss_num, send_web=False, behalfed=challenger)
+			else:
+				self.apply_for_challenge(False, group_id, challenger, boss_num, send_web=False, behalfed=behalf)
+		except Exception as e1:
 			if '完整' in str(e1):
 				try:
-					self.apply_for_challenge(True, group_id, qqid, boss_num, qqid, False)
-				except GroupError as e2:
+					if behalfed:
+						self.apply_for_challenge(True, group_id, behalf, boss_num, send_web=False, behalfed=challenger)
+					else:
+						self.apply_for_challenge(True, group_id, challenger, boss_num, send_web=False, behalfed=behalf)
+				except Exception as e2:
 					if '补偿' in str(e2):
 						raise GroupError('你今天都下班了，挂啥子树啊 (╯‵□′)╯︵┻━┻')
 					else:
@@ -903,21 +925,27 @@ def put_on_the_tree(self, group_id: Groupid, qqid: QQid, message=None, boss_num=
 			else:
 				raise GroupError(str(e1))
 	else:
-		if str(self.get_in_boss_num(group_id, qqid)) != str(boss_num):
+		if str(self.get_in_boss_num(group_id, challenger)) != str(boss_num):
 			raise GroupError('你申请的王和挂树的王不一样，怎么挂树啊 (╯‵□′)╯︵┻━┻')
 
 	challenging_member_list = safe_load_json(group.challenging_member_list, {})
 	for item in challenging_member_list.values():
-		if item.get(str(qqid)) != None and item.get(str(qqid)).get('tree'):
+		if item.get(str(challenger)) != None and item.get(str(challenger)).get('tree'):
 			raise GroupError('您已经在树上了')
-	
-	challenging_member_list[boss_num][str(qqid)]['tree'] = True
-	challenging_member_list[boss_num][str(qqid)]['msg'] = message
+
+
+	if (behalf is None) and (behalf_is_member is None):
+		challenging_member_list[boss_num][str(challenger)]['tree'] = True
+		challenging_member_list[boss_num][str(challenger)]['msg'] = message
+	else:
+		challenging_member_list[boss_num][str(challenger)]['tree'] = True
+		challenging_member_list[boss_num][str(challenger)]['msg'] = f'[「{behalf_nickname}」代挂]' + str(message)
+
 	group.challenging_member_list = json.dumps(challenging_member_list)
 	group.save()
 	self._boss_status[group_id].set_result((self._boss_data_dict(group), group.boss_cycle, '挂树惹~ (っ °Д °;)っ'))
 	self._boss_status[group_id] = asyncio.get_event_loop().create_future()
-	return '挂树惹~ (っ °Д °;)っ'
+	return f'{challenger_nickname}挂树惹~ (っ °Д °;)っ'
 
 #查树
 def query_tree(self, group_id: Groupid, user_id: QQid, boss_id=0) -> dict:
@@ -1203,11 +1231,20 @@ def save_slot(self, group_id: Groupid, qqid: QQid,
 	if membership.last_save_slot == today:
 		raise UserError('您今天已经SL过了，该不会退游戏了吧？ Σ(っ °Д °;)っ')
 	membership.last_save_slot = today
+
+
+	if self.check_tree(group_id, qqid):
+		try:
+			self.take_it_of_the_tree(group_id, qqid)
+		except:
+			pass
+
 	if self.check_blade(group_id, qqid):
-		self.cancel_blade(group_id, qqid)
-	tree_check = self.check_tree(group_id, qqid)
-	if tree_check:
-		self.take_it_of_the_tree(group_id, qqid)
+		try:
+			self.cancel_blade(group_id, qqid)
+		except:
+			pass
+
 	membership.save()
 
 	# refresh
