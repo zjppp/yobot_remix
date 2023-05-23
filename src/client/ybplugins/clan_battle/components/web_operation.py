@@ -9,6 +9,7 @@ from ...templating import render_template
 from ...ybdata import Clan_group, Clan_member, User
 from ..exception import ClanBattleError
 from ..util import pcr_datetime
+from .multi_cq_utils import who_am_i
 
 _logger = logging.getLogger(__name__)
 
