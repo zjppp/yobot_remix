@@ -1417,6 +1417,10 @@ def challenger_info(self, group_id):
 			this_boss_data['is_next']
 		))
 	level_cycle = self._level_by_cycle(group.boss_cycle, group.game_server)
+	try:
+		_bg_color = [(132, 1, 244), (115, 166, 231), (206, 105, 165), (206, 80, 66), (181, 105, 206)][level_cycle]
+	except IndexError:
+		_bg_color = (181, 105, 206)
 	process_image = get_process_image(
 		[
 			GroupStateBlock(
@@ -1431,7 +1435,7 @@ def challenger_info(self, group_id):
 				data_text=chr(65+level_cycle),
 				title_color=(255, 255, 255),
 				data_color=(255, 255, 255),
-				background_color=[(132, 1, 244), (115, 166, 231), (206, 105, 165), (206, 80, 66), (181, 105, 206)][level_cycle],
+				background_color=_bg_color,
 			),
 		],
 		{"补偿": half_challenge_list}
