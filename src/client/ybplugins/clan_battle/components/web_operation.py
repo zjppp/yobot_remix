@@ -8,7 +8,7 @@ from quart import Quart, jsonify, make_response, redirect, request, session, url
 from ...templating import render_template
 from ...ybdata import Clan_group, Clan_member, User
 from ..exception import ClanBattleError
-from ..util import pcr_datetime
+from ..util import pcr_datetime, atqq
 from .multi_cq_utils import who_am_i
 
 _logger = logging.getLogger(__name__)
