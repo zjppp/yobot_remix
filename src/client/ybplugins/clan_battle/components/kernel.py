@@ -155,10 +155,10 @@ def execute(self, match_num, ctx):
 
 
 	elif match_num == 4:  # 报刀
-		match = re.match(r'^(?:报刀|刀) ?(?:[\-\=]([1-5]))? ?(\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+		match = re.match(r'^(?:报刀|刀) ?(?:[\-\=]([1-5]))? ?(\d+)?([Ww万Kk千])? *(补偿|补|b|bc|B|BC|Bc|bC)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
 		if not match:
 			# 尝试使用另外的匹配模式
-			match = re.match(r'^(?:报刀|刀) ?([1-5])? (\d+)?([Ww万Kk千])? *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+			match = re.match(r'^(?:报刀|刀) ?([1-5])? (\d+)?([Ww万Kk千])? *(补偿|补|b|bc|B|BC|Bc|bC)? *(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
 			if not match:
 				return '报刀格式:\n报刀 100w（需先申请出刀）\n报刀 -1 100w（-1表示报在1王）'
 		unit = {
@@ -188,7 +188,7 @@ def execute(self, match_num, ctx):
 
 
 	elif match_num == 5:  # 尾刀
-		match = re.match(r'^(?:尾刀|尾) ?([1-5])? *(补偿|补|b|bc)? ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
+		match = re.match(r'^(?:尾刀|尾) ?([1-5])? *(补偿|补|b|bc|B|BC|Bc|bC)? ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])?$', cmd)
 		if not match: return
 		behalf = match.group(3) and int(match.group(3))
 		is_continue = match.group(2) and True or False
@@ -278,7 +278,7 @@ def execute(self, match_num, ctx):
 		return msg
 
 	elif match_num == 12:  # 申请
-		match = re.match(r'^(?:进|申请出刀)(| )([1-5]) *(补偿|补|b|bc)? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+		match = re.match(r'^(?:进|申请出刀)(| )([1-5]) *(补偿|补|b|bc|B|BC|Bc|bC)? *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
 		if not match: return '申请出刀格式错误惹(っ °Д °;)っ\n如：申请出刀1 or 申请出刀1补偿@xxx'
 		boss_num = match.group(2)
 		is_continue = match.group(3) and True or False
