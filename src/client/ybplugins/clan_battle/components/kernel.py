@@ -2,6 +2,9 @@ import asyncio
 import logging
 import os
 import re
+import sys
+import configparser
+from pathlib import Path
 from typing import Any, Dict
 from urllib.parse import urljoin
 
@@ -59,8 +62,6 @@ def init(self,
 		User.qqid.in_(self.setting['super-admin'])
 	).execute()
 
-	import sys
-	from pathlib import Path
 	inipath = Path.cwd().resolve().joinpath("./yobot_data/groups.ini") if "_MEIPASS" in dir(sys) else Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
 	if not inipath.exists():
 		if not (Path(inipath).resolve().parent).exists(): #直接取上级的目录
@@ -108,9 +109,6 @@ def execute(self, match_num, ctx):
 			_logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
 			return str(e)
 		_logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
-		import sys
-		from pathlib import Path
-		import configparser
 		inipath = Path.cwd().resolve().joinpath("./yobot_data/groups.ini") if "_MEIPASS" in dir(sys) else Path(os.path.dirname(__file__)).parents[2] / 'yobot_data' / 'groups.ini'
 		config=configparser.RawConfigParser()
 		config.read(str(inipath))
@@ -147,7 +145,7 @@ def execute(self, match_num, ctx):
 	elif match_num == 3:  # 状态
 		if cmd != '状态': return
 		try: 
-			boss_summary = f'详情请用“面板”命令在网页查看~\n' + self.boss_status_summary(group_id)
+			boss_summary = self.boss_status_summary(group_id)
 			asyncio.ensure_future(download_missing_user_profile())
 		except ClanBattleError as e:
 			return str(e)
@@ -261,11 +259,9 @@ def execute(self, match_num, ctx):
 		boss_num = match.group(1) and int(match.group(1)) or False
 		behalf = match.group(2) and int(match.group(2))
 		if not behalf: behalf = None
-		# behalf = behalf or user_id
 		if isinstance(extra_msg, str):
 			extra_msg = extra_msg.strip()
-			if not extra_msg:
-				extra_msg = None
+			if not extra_msg: extra_msg = None
 		try:
 			msg = self.put_on_the_tree(group_id, user_id, extra_msg, boss_num, behalfed=behalf)
 			# if behalf:
