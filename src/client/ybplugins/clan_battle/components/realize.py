@@ -49,6 +49,7 @@ def text_2_pic(self, text:string, weight:int, height:int, bg_color:Tuple, text_c
 
 def future_operation(self, group, msg):
 	self._boss_status[group.group_id].set_result((self._boss_data_dict(group), group.boss_cycle, msg))
+	del self._boss_status[group.group_id]
 	self._boss_status[group.group_id] = asyncio.get_event_loop().create_future()
 
 #获取公会数据实例，确保每次获取的都是同一个
@@ -1126,7 +1127,7 @@ def apply_for_challenge(self, is_continue, group_id:Groupid, qqid:QQid, boss_num
 
 	self.challenger_info_small(group, boss_num, info)
 	info = '\n'.join(info)
-	if send_web: future_operation(self, group, f'申请挑战{boss_num}王成功')
+	if send_web: future_operation(self, group, f'{nik}申请挑战{boss_num}王成功')
 	return info
 
 #取消申请出刀
