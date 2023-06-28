@@ -184,6 +184,7 @@ def register_routes(self, app: Quart):
 					payload['defeat'],
 					payload['damage'],
 					payload['behalf'],
+					payload['is_continue'],
 					boss_num = payload['boss_num'])
 				except ClanBattleError as e:
 					_logger.info('网页 失败 {} {} {}'.format(

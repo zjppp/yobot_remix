@@ -216,6 +216,7 @@ var vm = new Vue({
                 behalf: this.behalf,
                 damage: this.damage,
                 boss_num: boss_num,
+                is_continue: this.is_continue,
             });
             this.recordBehalfVisible = false;
         },

@@ -120,6 +120,11 @@
 													<el-switch v-model="defeat" active-text="击败" inactive-text="未击败"></el-switch>
 												</el-radio-group>
 											</el-form-item>
+											<el-form-item label="是否是补偿刀" label-width="120">
+												<el-radio-group v-model="is_continue">
+													<el-switch v-model="is_continue" active-text="是" inactive-text="否"></el-switch>
+												</el-radio-group>
+											</el-form-item>
 											<el-form-item label="伤害值" label-width="120">
 												<el-input v-model.number="damage" {# @keyup.enter.native="recordDamage" #}>
 													<template slot="prepend">[[ damageHint ]]</template>
@@ -407,6 +412,11 @@
 									<el-form-item label="是否击败boss" label-width="120">
 										<el-radio-group v-model="defeat">
 											<el-switch v-model="defeat" active-text="击败" inactive-text="未击败"></el-switch>
+										</el-radio-group>
+									</el-form-item>
+									<el-form-item label="是否是补偿刀" label-width="120">
+										<el-radio-group v-model="is_continue">
+											<el-switch v-model="is_continue" active-text="是" inactive-text="否"></el-switch>
 										</el-radio-group>
 									</el-form-item>
 									<el-form-item label="伤害值" label-width="120">
