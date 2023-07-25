@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import datetime
-from hoshino import aiorequests as requests
+import aiohttp
 from urllib.parse import urljoin
 
 from playhouse.shortcuts import model_to_dict
@@ -394,9 +394,9 @@ class Setting:
             for server, _ in boss_infos.items():
                 real_url = url.format(server)
                 try:
-                    res = await requests.get(real_url)
-                    content = res.raw_response.content.decode()
-                    infos = json.loads(content)
+                    async with aiohttp.ClientSession() as ses:
+                        async with ses.get(real_url) as resp:
+                            infos = await resp.json()
                     success_flag = False
                     for info in infos:
                         if info["year"] != d_year or info["month"] != d_month: continue
@@ -439,15 +439,16 @@ class Setting:
             boss_id_name_path = os.path.join(self.setting['dirname'], 'BossIdAndName.json')
             with open(boss_id_name_path, 'w', encoding='utf-8') as f:
                 json.dump(save_boss_id_name, f, indent=4, ensure_ascii=False)
-            
+
             for boss_infos in new_boss_id_name.values():
                 for boss_id in boss_infos.keys():
                     icon_path = os.path.join(os.path.dirname(self.setting['dirname']), 'public', 'libs', 'yocool@final', 'princessadventure', 'boss_icon', f'{boss_id}.webp')
                     if not os.path.exists(icon_path):
-                        res = await requests.get(f'{base}{boss_id}.webp')
-                        res = res.raw_response
+                        async with aiohttp.ClientSession() as ses:
+                            async with ses.get(f'{base}{boss_id}.webp') as resp:
+                                data = await resp.read()
                         with open(icon_path, 'wb') as img:
-                            img.write(res.content)
+                            img.write(data)
 
             return jsonify(
                 code=0,
