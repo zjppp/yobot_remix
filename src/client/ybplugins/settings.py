@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import datetime
 import aiohttp
@@ -20,6 +21,7 @@ _returned_query_fileds = [
     User.last_login_ipaddr,
 ]
 
+logger = logging.getLogger(__name__)
 
 class Setting:
     Passive = False
@@ -388,7 +390,6 @@ class Setting:
             d_year = date.year
             d_month = date.month
             url = 'https://pcr.satroki.tech/api/Quest/GetClanBattleInfos?s={}'
-            base = 'https://redive.estertion.win/icon/unit/'
 
             boss_infos:dict = self.setting['boss']
             for server, _ in boss_infos.items():
@@ -440,17 +441,22 @@ class Setting:
             with open(boss_id_name_path, 'w', encoding='utf-8') as f:
                 json.dump(save_boss_id_name, f, indent=4, ensure_ascii=False)
 
+            task_list = []
             for boss_infos in new_boss_id_name.values():
                 for boss_id in boss_infos.keys():
                     icon_path = os.path.join(os.path.dirname(self.setting['dirname']), 'public', 'libs', 'yocool@final', 'princessadventure', 'boss_icon', f'{boss_id}.webp')
-                    if not os.path.exists(icon_path):
-                        async with aiohttp.ClientSession() as ses:
-                            async with ses.get(f'{base}{boss_id}.webp') as resp:
-                                data = await resp.read()
-                        with open(icon_path, 'wb') as img:
-                            img.write(data)
+                    if not os.path.exists(icon_path): task_list.append(download_icon(icon_path, boss_id))
+            await asyncio.gather(*task_list)
 
             return jsonify(
                 code=0,
                 message='<br/>'.join(back_msg),
             )
+
+async def download_icon(icon_path, boss_id):
+    async with aiohttp.ClientSession() as ses:
+        async with ses.get(f'https://redive.estertion.win/icon/unit/{boss_id}.webp') as resp:
+            data = await resp.read()
+    with open(icon_path, 'wb') as img:
+        img.write(data)
+    logger.info(f'{boss_id}.webp下载成功')
