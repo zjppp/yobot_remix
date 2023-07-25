@@ -8,7 +8,7 @@ var vm = new Vue({
         domainApply: false,
         applyName: '',
         loading: false,
-        boss_id_name: {}
+        boss_id_name: {},
     },
     mounted() {
         var thisvue = this;
@@ -45,6 +45,36 @@ var vm = new Vue({
                 }
             }).catch(function (error) {
                 alert(error);
+            });
+        },
+        auto_get_boss_data: function() {
+            var thisvue = this;
+            thisvue.$message({
+                message:'自动获取更新中，请稍后......',
+                type:'info',
+            })
+            axios.post("./auto_get_boss_data/", {
+                csrf_token: csrf_token
+            }).then(function (res) {
+                if (res.data.code == 0) {
+                    thisvue.$alert(res.data.message + '<br/><br/>刷新页面查看获取结果，重启机器人后生效。', '获取成功', {
+                        dangerouslyUseHTMLString: true,
+                        confirmButtonText: '好的',
+                        type: 'success',
+                    });
+                } else {
+                    thisvue.$message({
+                        dangerouslyUseHTMLString: true,
+                        message:res.data.message + '<br/>自动获取失败',
+                        type:'error',
+                    })
+                }
+            }).catch(function (error) {
+                thisvue.$message({
+                    dangerouslyUseHTMLString: true,
+                    message:error + '<br/>自动获取失败',
+                    type:'error',
+                })
             });
         },
         sendApply: function (api) {
