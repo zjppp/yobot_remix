@@ -16,28 +16,49 @@ var vm = new Vue({
         qqid: 0,
         nickname: '',
         tempList:[0,1,2,3,4,5],
+		members: [],
     },
     mounted() {
         var thisvue = this;
         var pathname = window.location.pathname.split('/');
-        thisvue.qqid = parseInt(pathname[pathname.length - 2]);
-        axios.post('../api/', {
-            action: 'get_user_challenge',
-            csrf_token: csrf_token,
-            qqid: thisvue.qqid,
-        }).then(function (res) {
+		thisvue.qqid = parseInt(pathname[pathname.length - 2]);
+        axios.all([
+            axios.post('../api/', {
+                action: 'get_user_challenge',
+                csrf_token: csrf_token,
+                qqid: thisvue.qqid,
+            }),
+            axios.post('../api/', {
+                action: 'get_member_list',
+                csrf_token: csrf_token,
+            }),
+        ]).then(axios.spread(function (res, memres) {
             if (res.data.code != 0) {
                 thisvue.$alert(res.data.message, '获取记录失败');
                 return;
             }
-            thisvue.nickname = res.data.user_info.nickname;
+            if (memres.data.code != 0) {
+                thisvue.$alert(memres.data.message, '获取成员失败');
+                return;
+            }
+            thisvue.members = memres.data.members;
+			thisvue.nickname = res.data.user_info.nickname;
             thisvue.refresh(res.data.challenges, res.data.game_server);
             thisvue.isLoading = false;
-        }).catch(function (error) {
+        })).catch(function (error) {
             thisvue.$alert(error, '获取数据失败');
+			
         });
-    },
+	},
     methods: {
+        find_name: function (qqid) {
+            for (m of this.members) {
+                if (m.qqid == qqid) {
+                    return m.nickname;
+                }
+            };
+            return qqid;
+        },
         csummary: function (cha) {
             if (cha == undefined) {
                 return '';
